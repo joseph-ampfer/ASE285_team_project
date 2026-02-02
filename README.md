@@ -138,9 +138,9 @@ Each requirement has a corresponding acceptance test. Tests will be implemented 
 
 | Member | Role | Features Assigned |
 |--------|------|-------------------|
-| Member A | Team Leader | F1: Core To-Do List, F2: Sub-Tasks + Progress |
-| Member B | Developer | F3: Kanban Columns, F4: Calendar View |
-| Member C | Developer | F5: Canvas API, F6: Gamification |
+| Denver | Team Leader | F1: Core To-Do List, F2: Sub-Tasks + Progress |
+| Developer | Developer | F3: Kanban Columns, F4: Calendar View |
+| Nia | Developer | F5: Canvas API, F6: Gamification |
 
 ---
 
