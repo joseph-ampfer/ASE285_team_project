@@ -51,8 +51,8 @@ style: |
 
 | Member | Role | Features Assigned |
 |--------|------|-------------------|
-| Denver | Team Leader | F1: Core To-Do List, F2: Sub-Tasks + Progress |
-| Developer | Developer | F3: Kanban Columns, F4: Calendar View |
+| Denver | Developer | F1: Core To-Do List, F2: Sub-Tasks + Progress |
+| AJ | Developer | F3: Kanban Columns, F4: Calendar View |
 | Nia | Developer | F5: Canvas API, F6: Gamification |
 
 ---
@@ -260,7 +260,7 @@ Each requirement has a corresponding acceptance test.
 
 ### Feature Distribution:
 - Denver: 2 features (6 requirements)
-- Developer: 2 features (5 requirements)
+- AJ: 2 features (5 requirements)
 - Nia: 2 features (6 requirements)
 
 ---
