@@ -95,7 +95,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
 │    Frontend     │────▶│   Backend API   │────▶│    Database     │
-│  (React/Vue)    │     │   (Node.js)     │     │  (MongoDB)   │
+│  (React/Vue)    │     │   (Node.js)     │     │    (MongoDB)    │
 │                 │◀────│                 │◀────│                 │
 └─────────────────┘     └─────────────────┘     └─────────────────┘
                                │
@@ -149,8 +149,8 @@ Each requirement has a corresponding acceptance test. Tests will be implemented 
 | Resource | Link |
 |----------|------|
 | GitHub Repository | [https://github.com/joseph-ampfer/ASE285_team_project](https://github.com/joseph-ampfer/ASE285_team_project) |
-| Canvas Team Project Page | [Link TBD] |
-| Canvas Progress Page | [Link TBD] |
+| Canvas Team Project Page | [https://nku.instructure.com/courses/87378/pages/team-project-kiss](https://nku.instructure.com/courses/87378/pages/team-project-kiss) |
+| Canvas Progress Page | [https://nku.instructure.com/courses/87378/pages/team-progress-kiss](https://nku.instructure.com/courses/87378/pages/team-progress-kiss) |
 | PPP Presentation Slides | [Link TBD] |
 | Documentation | [docs/](./docs/) |
 | Source Code | [src/](./src/) |
