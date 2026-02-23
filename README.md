@@ -23,7 +23,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ## Features and Requirements
 
 ### Feature 1: Core To-Do List Management
-**Assigned to:** Member A
+**Assigned to:** Denver Hogan
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
@@ -34,7 +34,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ---
 
 ### Feature 2: Sub-Tasks + Progress Tracking
-**Assigned to:** Member A
+**Assigned to:** Denver Hogan
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
@@ -45,7 +45,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ---
 
 ### Feature 3: Kanban Columns (To-Do / In Progress / Done)
-**Assigned to:** Member B
+**Assigned to:** AJ
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
@@ -56,7 +56,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ---
 
 ### Feature 4: Calendar View (Read-Only)
-**Assigned to:** Member B
+**Assigned to:** AJ
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
@@ -66,7 +66,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ---
 
 ### Feature 5: Canvas API Integration
-**Assigned to:** Member C
+**Assigned to:** Naeun Kim
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
@@ -77,7 +77,7 @@ TaskFlow provides a student-oriented task manager with sub-task progress trackin
 ---
 
 ### Feature 6: Points/Gamification System
-**Assigned to:** Member C
+**Assigned to:** Naeun Kim
 
 | ID | User Story | Acceptance Test |
 |----|------------|-----------------|
