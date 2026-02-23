@@ -1,9 +1,10 @@
 .app {
   width: 100%;
-  max-width: 600px;
+  max-width: 900px;
   display: flex;
   flex-direction: column;
   gap: 2rem;
+  margin: 0 auto;
 }
 
 /* Header */
@@ -23,6 +24,37 @@
 .subtitle {
   color: #888;
   margin-top: 0.5rem;
+}
+
+/* Navigation Tabs */
+.app-nav {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.nav-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #aaa;
+  padding: 0.6rem 1.5rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.nav-btn.active {
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  color: #1a1a2e;
+  border-color: transparent;
+  box-shadow: 0 4px 15px rgba(0, 217, 255, 0.3);
 }
 
 /* Error Message */
@@ -239,4 +271,3 @@
 .btn-delete:hover {
   background: rgba(255, 77, 77, 0.3);
 }
-
