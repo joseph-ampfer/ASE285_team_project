@@ -35,9 +35,9 @@ function App() {
     }
   }
 
-  const addTodo = async (title, date) => {
+  const addTodo = async (title, date, description) => {
     try {
-      const response = await axios.post(API_URL, { title, date })
+      const response = await axios.post(API_URL, { title, date, description })
       setTodos([...todos, response.data])
       setError(null)
     } catch (err) {
@@ -46,9 +46,9 @@ function App() {
     }
   }
 
-  const updateTodo = async (id, title, date) => {
+  const updateTodo = async (id, title, date, description) => {
     try {
-      const response = await axios.put(`${API_URL}/${id}`, { title, date })
+      const response = await axios.put(`${API_URL}/${id}`, { title, date, description })
       setTodos(todos.map(todo =>
         todo._id === id ? response.data : todo
       ))
