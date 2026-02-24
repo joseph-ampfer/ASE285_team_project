@@ -1,4 +1,4 @@
-function TodoItem({ todo, onEdit, onDelete }) {
+function TodoItem({ todo, onEdit, onDelete, onSelect }) {
   const handleDelete = () => {
     if (window.confirm(`Delete "${todo.title}"?`)) {
       onDelete(todo._id)
@@ -6,7 +6,7 @@ function TodoItem({ todo, onEdit, onDelete }) {
   }
 
   return (
-    <div className="todo-item">
+    <div className="todo-item" onClick={onSelect}>
       <div className="todo-content">
         <div className="todo-title">{todo.title}</div>
         <div className="todo-date">📅 {todo.date}</div>
@@ -14,14 +14,20 @@ function TodoItem({ todo, onEdit, onDelete }) {
       <div className="todo-actions">
         <button 
           className="btn-icon btn-edit"
-          onClick={() => onEdit(todo)}
+          onClick={(e) => {
+            e.stopPropagation()
+            onEdit(todo)
+          }}
           title="Edit"
         >
           ✏️
         </button>
         <button 
           className="btn-icon btn-delete"
-          onClick={handleDelete}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleDelete(todo)
+          }}
           title="Delete"
         >
           🗑️
