@@ -1,6 +1,6 @@
 // routes/api.js - REST API endpoints using Mongoose
 import express from 'express';
-import Post from '../models/Post.js';
+import Post, { KanbanStatus } from '../models/Post.js';
 import { getNextId } from '../util/util.js';
 
 export function createApiRouter() {
@@ -39,7 +39,7 @@ export function createApiRouter() {
   // POST /api/posts - Create a new post
   router.post('/posts', async (req, res) => {
     try {
-      const { title, date } = req.body || {};
+      const { title, date, description, status } = req.body || {};
       
       if (!title) {
         return res.status(400).json({ error: 'title is required' });
@@ -54,6 +54,9 @@ export function createApiRouter() {
         _id: nextId,
         title,
         date,
+        ...(description !== undefined && { description }),
+        ...(status !== undefined && { status }),
+        completed: status === KanbanStatus.DONE,
       });
 
       await newPost.save();
@@ -73,15 +76,20 @@ export function createApiRouter() {
         return res.status(400).json({ error: 'Invalid id' });
       }
 
-      const { title, date } = req.body || {};
+      const { title, date, description, status } = req.body || {};
       const update = {};
       if (title !== undefined) update.title = title;
       if (date !== undefined) update.date = date;
+      if (description !== undefined) update.description = description;
+      if (status !== undefined) {
+        update.status = status;
+        update.completed = status === KanbanStatus.DONE;
+      }
 
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         update,
-        { new: true } // Return the updated document
+        { new: true, runValidators: true } // Return the updated document      );
       );
 
       if (!updatedPost) {

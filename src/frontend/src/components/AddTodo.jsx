@@ -3,6 +3,7 @@ import { useState } from 'react'
 function AddTodo({ onAdd }) {
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
+  const [description, setDescription] = useState('')
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -12,9 +13,10 @@ function AddTodo({ onAdd }) {
       return
     }
 
-    onAdd(title.trim(), date)
+    onAdd(title.trim(), date, description.trim())
     setTitle('')
     setDate('')
+    setDescription('')
   }
 
   return (
@@ -39,6 +41,17 @@ function AddTodo({ onAdd }) {
           id="date"
           value={date}
           onChange={(e) => setDate(e.target.value)}
+        />
+      </div>
+
+      <div className="form-group">
+        <label htmlFor="description">Description</label>
+        <input
+          type="text"
+          id="description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter an optional description..."
         />
       </div>
 
