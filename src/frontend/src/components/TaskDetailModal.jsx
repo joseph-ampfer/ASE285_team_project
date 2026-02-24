@@ -1,3 +1,6 @@
+import Portal from './Portal'
+import './CalendarView.css'
+
 function TaskDetailModal({ task, onClose }) {
     if (!task) return null
 
@@ -9,30 +12,39 @@ function TaskDetailModal({ task, onClose }) {
     }
 
     return (
-        <div className="modal-overlay" onClick={handleOverlayClick}>
-            <div className="modal-content">
-                <h3>Task Details</h3>
+        <Portal>
+            <div className="modal-overlay" onClick={handleOverlayClick}>
+                <div className="modal-content">
+                    <h3>Task Details</h3>
 
-                <div className="modal-info">
-                    <div className="info-group">
-                        <span className="modal-label">Title</span>
-                        <p className="modal-value">{task.title}</p>
+                    <div className="modal-info">
+                        <div className="info-group">
+                            <span className="modal-label">Title</span>
+                            <p className="modal-value">{task.title}</p>
+                        </div>
+
+                        <div className="info-group" style={{ marginTop: '1rem' }}>
+                            <span className="modal-label">Due Date</span>
+                            <p className="modal-value">📅 {task.date}</p>
+                        </div>
+
+                        {task.description && task.description.trim() !== '' && (
+                            <div className="info-group" style={{ marginTop: '1rem' }}>
+                                <span className="modal-label">Description</span>
+                                <p className="modal-value">{task.description}</p>
+                            </div>
+                        )}
                     </div>
 
-                    <div className="info-group" style={{ marginTop: '1rem' }}>
-                        <span className="modal-label">Due Date</span>
-                        <p className="modal-value">📅 {task.date}</p>
-                    </div>
+                    <button
+                        className="btn btn-primary btn-close"
+                        onClick={onClose}
+                        >
+                        Close
+                    </button>
                 </div>
-
-                <button
-                    className="btn btn-primary btn-close"
-                    onClick={onClose}
-                >
-                    Close
-                </button>
             </div>
-        </div>
+        </Portal>
     )
 }
 
