@@ -2,6 +2,7 @@
 import express from 'express';
 import Post, { KanbanStatus } from '../models/Post.js';
 import { getNextId } from '../util/util.js';
+import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
 
 export function createApiRouter() {
   const router = express.Router();
@@ -86,17 +87,32 @@ export function createApiRouter() {
         update.completed = status === KanbanStatus.DONE;
       }
 
+      const previous = await Post.findById(id);
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         update,
-        { new: true, runValidators: true } // Return the updated document      );
+        { new: true, runValidators: true }
       );
 
       if (!updatedPost) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
+      let gamification = null;
+      const isNowDone = updatedPost.status === KanbanStatus.DONE;
+      const wasDoneBefore = previous?.status === KanbanStatus.DONE;
+
+      if (isNowDone && !wasDoneBefore) {
+        updatedPost.completedAt = new Date();
+        await updatedPost.save();
+        gamification = await awardForTaskCompletion(updatedPost);
+      }
+
       console.log('Post updated:', updatedPost);
+      if (gamification) {
+        return res.json({ post: updatedPost, gamification });
+      }
+
       res.json(updatedPost);
     } catch (error) {
       console.error('Error updating post:', error);
@@ -123,6 +139,28 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error deleting post:', error);
       res.status(500).json({ error: 'Failed to delete post' });
+    }
+  });
+
+  // GET /api/gamification/stats - current points/level/streak
+  router.get('/gamification/stats', async (_req, res) => {
+    try {
+      const stats = await getStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching gamification stats:', error);
+      res.status(500).json({ error: 'Failed to fetch gamification stats' });
+    }
+  });
+
+  // GET /api/gamification/history - recent completion history
+  router.get('/gamification/history', async (_req, res) => {
+    try {
+      const events = await getHistory(100);
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching gamification history:', error);
+      res.status(500).json({ error: 'Failed to fetch gamification history' });
     }
   });
 

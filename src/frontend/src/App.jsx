@@ -5,6 +5,7 @@ import AddTodo from './components/AddTodo'
 import EditTodo from './components/EditTodo'
 import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
+import GamificationPanel from './components/GamificationPanel'
 import './App.css'
 
 // API base URL - uses Vite proxy in development
@@ -16,10 +17,19 @@ function App() {
   const [error, setError] = useState(null)
   const [editingTodo, setEditingTodo] = useState(null)
   const [currentView, setCurrentView] = useState('list') // 'list', 'calendar', or 'kanban'
+  const [stats, setStats] = useState({
+    points: 0,
+    level: 1,
+    streakCount: 0,
+    nextLevelAt: 100
+  })
+  const [history, setHistory] = useState([])
+  const [isGamificationOpen, setIsGamificationOpen] = useState(false)
 
   // Fetch all todos on component mount
   useEffect(() => {
     fetchTodos()
+    fetchGamification()
   }, [])
 
   const fetchTodos = async () => {
@@ -33,6 +43,20 @@ function App() {
       setError('Failed to fetch todos. Make sure the backend is running.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchGamification = async () => {
+    try {
+      const [statsRes, historyRes] = await Promise.all([
+        axios.get('/api/gamification/stats'),
+        axios.get('/api/gamification/history')
+      ])
+      setStats(statsRes.data)
+      setHistory(historyRes.data)
+    } catch (err) {
+      console.error('Error fetching gamification data:', err)
+      // Gamification is optional; do not surface an error banner.
     }
   }
 
@@ -53,9 +77,22 @@ function App() {
       if (status) payload.status = status
 
       const response = await axios.put(`${API_URL}/${id}`, payload)
-      setTodos(todos.map(todo =>
-        todo._id === id ? response.data : todo
-      ))
+      const data = response.data
+
+      if (data && data.post) {
+        setTodos(todos.map(todo =>
+          todo._id === id ? data.post : todo
+        ))
+        if (data.gamification) {
+          setStats(data.gamification.stats)
+          // refresh history to include the new event
+          fetchGamification()
+        }
+      } else {
+        setTodos(todos.map(todo =>
+          todo._id === id ? data : todo
+        ))
+      }
       setEditingTodo(null)
       setError(null)
     } catch (err) {
@@ -117,6 +154,13 @@ function App() {
 
   return (
     <div className="app">
+      <GamificationPanel
+        stats={stats}
+        history={history}
+        open={isGamificationOpen}
+        onToggle={() => setIsGamificationOpen(!isGamificationOpen)}
+      />
+
       <header className="app-header">
         <h1>📝 Todo App</h1>
         <p className="subtitle">Manage your tasks efficiently</p>

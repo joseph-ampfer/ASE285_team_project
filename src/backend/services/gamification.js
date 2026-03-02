@@ -1,4 +1,5 @@
 import GamificationStats from '../models/GamificationStats.js';
+import GamificationEvent from '../models/GamificationEvent.js';
 
 const STATS_ID = 'global';
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -96,6 +97,22 @@ export async function awardForTaskCompletion(todo) {
 
   await stats.save();
 
+  const eventId = `${todo?._id}-${completedAt.getTime()}`;
+  await GamificationEvent.create({
+    _id: eventId,
+    postId: todo?._id,
+    title: todo?.title ?? 'Untitled Task',
+    date: todo?.date ?? '',
+    gained: scoring.gained,
+    breakdown: {
+      base: scoring.base,
+      earlyBonus: scoring.earlyBonus,
+      comboBonus: scoring.comboBonus,
+      daysEarly: scoring.daysEarly,
+    },
+    completionDay,
+  });
+
   return {
     gained: scoring.gained,
     breakdown: {
@@ -126,7 +143,24 @@ export async function getStats() {
     level: stats.level,
     streakCount: stats.streakCount,
     lastCompletionDay: stats.lastCompletionDay,
-    nextLevelAt: nextLevelAt(stats.level),
+      nextLevelAt: nextLevelAt(stats.level),
   };
 }
 
+export async function getHistory(limit = 50) {
+  const events = await GamificationEvent.find({})
+    .sort({ createdAt: -1 })
+    .limit(limit)
+    .lean();
+
+  return events.map((e) => ({
+    id: e._id,
+    postId: e.postId,
+    title: e.title,
+    date: e.date,
+    gained: e.gained,
+    breakdown: e.breakdown,
+    completionDay: e.completionDay,
+    createdAt: e.createdAt,
+  }));
+}
