@@ -6,7 +6,7 @@ function TaskDetailModal({ task, onClose }) {
 
     // Handle click on overlay to close
     const handleOverlayClick = (e) => {
-        if (e.target === e.currentTarget) {
+        if (e.target.classList.contains('modal-overlay')) {
             onClose()
         }
     }

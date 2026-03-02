@@ -13,7 +13,7 @@ function EditTodo({ todo, onUpdate, onCancel }) {
       return
     }
 
-    onUpdate(todo._id, title.trim(), date, description)
+    onUpdate(todo._id, title.trim(), date, description.trim())
   }
 
   return (
@@ -42,7 +42,7 @@ function EditTodo({ todo, onUpdate, onCancel }) {
       </div>
 
       <div className="form-group">
-        <label htmlFor="description">Description</label>
+        <label htmlFor="edit-description">Description</label>
         <input
           type="text"
           id="edit-description"
