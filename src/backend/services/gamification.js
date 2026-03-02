@@ -38,7 +38,6 @@ function updateStreak(stats, completionDay) {
   }
 
   if (lastDay === completionDay) {
-    // Multiple completions in one day don't change streak.
     return { streakCount: stats.streakCount, streakChanged: false };
   }
 
@@ -68,12 +67,12 @@ function calcPointsForCompletion({ dueDateYmd, completedAt, streakCount }) {
 
   let daysEarly = 0;
   if (completionDayUtc && dueDayUtc) {
-    // Positive means finished before due date (by whole days).
+    // Positive: finished before due date
     daysEarly = Math.max(0, Math.round((dueDayUtc - completionDayUtc) / MS_PER_DAY));
   }
 
   const earlyBonus = daysEarly * 3; // +3 per day early
-  const comboBonus = Math.min(50, streakCount * 2); // capped so streak doesn't explode
+  const comboBonus = Math.min(50, streakCount * 2);
   const gained = base + earlyBonus + comboBonus;
 
   return { gained, base, earlyBonus, comboBonus, daysEarly };
