@@ -6,6 +6,7 @@ import EditTodo from './components/EditTodo'
 import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
 import GamificationPanel from './components/GamificationPanel'
+import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
 // API base URL - uses Vite proxy in development
@@ -25,12 +26,38 @@ function App() {
   })
   const [history, setHistory] = useState([])
   const [isGamificationOpen, setIsGamificationOpen] = useState(false)
+  const [theme, setTheme] = useState('dark')
 
-  // Fetch all todos on component mount
+  // Fetch all todos and settings on mount
   useEffect(() => {
     fetchTodos()
     fetchGamification()
+    fetchSettings()
   }, [])
+
+  // Apply theme to body for global styles
+  useEffect(() => {
+    document.body.setAttribute('data-theme', theme)
+  }, [theme])
+
+  const fetchSettings = async () => {
+    try {
+      const res = await axios.get('/api/settings')
+      setTheme(res.data.theme || 'dark')
+    } catch (err) {
+      console.error('Error fetching settings:', err)
+    }
+  }
+
+  const handleThemeToggle = async () => {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    try {
+      await axios.put('/api/settings', { theme: next })
+      setTheme(next)
+    } catch (err) {
+      console.error('Error updating theme:', err)
+    }
+  }
 
   const fetchTodos = async () => {
     try {
@@ -153,7 +180,8 @@ function App() {
   }
 
   return (
-    <div className="app">
+    <div className="app" data-theme={theme}>
+      <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
       <GamificationPanel
         stats={stats}
         history={history}

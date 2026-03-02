@@ -41,7 +41,7 @@
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
 }
 
-/* 레벨 게이지: 아래에서 위로 민트색 차오름 */
+/* level gauge */    
 .gp-toggle-gauge {
   position: absolute;
   bottom: 0;
@@ -246,6 +246,50 @@
   font-size: 0.8rem;
   font-weight: 600;
   color: #00ff88;
+}
+
+.app[data-theme="light"] .gp-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-toggle-pt,
+.app[data-theme="light"] .gp-toggle-meta {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .gp-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+.app[data-theme="light"] .gp-level-label,
+.app[data-theme="light"] .gp-points-sub,
+.app[data-theme="light"] .gp-history-header,
+.app[data-theme="light"] .gp-history-date {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .gp-points-value,
+.app[data-theme="light"] .gp-streak,
+.app[data-theme="light"] .gp-history-title {
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-progress {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .gp-history {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .gp-history-item {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
 }
 
 @media (max-width: 640px) {

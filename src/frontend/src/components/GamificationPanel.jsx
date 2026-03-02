@@ -25,7 +25,7 @@ function GamificationPanel({ stats, history, open, onToggle }) {
         <button
           type="button"
           className="gp-backdrop"
-          aria-label="닫기"
+          aria-label="Close"
           onClick={onToggle}
         />
       )}

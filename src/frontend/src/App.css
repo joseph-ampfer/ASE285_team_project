@@ -272,3 +272,82 @@
 .btn-delete:hover {
   background: rgba(255, 77, 77, 0.3);
 }
+
+/* light mode */
+.app[data-theme="light"] .subtitle {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .nav-btn {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
+
+.app[data-theme="light"] .nav-btn:hover {
+  background: #fff;
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .loading {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .app-footer {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .todo-form {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .todo-form h2 {
+  color: #00d9ff;
+}
+
+.app[data-theme="light"] .form-group label {
+  color: #475569;
+}
+
+.app[data-theme="light"] .form-group input {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: #fff;
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .form-group input::placeholder {
+  color: #94a3b8;
+}
+
+.app[data-theme="light"] .btn-secondary {
+  background: rgba(0, 0, 0, 0.06);
+  color: #475569;
+}
+
+.app[data-theme="light"] .btn-secondary:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.app[data-theme="light"] .todo-list-empty {
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.app[data-theme="light"] .todo-item {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .todo-item:hover {
+  border-color: rgba(0, 217, 255, 0.4);
+}
+
+.app[data-theme="light"] .todo-title {
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .todo-date {
+  color: #64748b;
+}

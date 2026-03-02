@@ -209,3 +209,68 @@
   width: 100%;
   margin-top: 1rem;
 }
+
+/* light mode */
+.app[data-theme="light"] .calendar-container {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .calendar-header h2 {
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .btn-nav {
+  background: rgba(0, 0, 0, 0.06);
+  color: #475569;
+}
+
+.app[data-theme="light"] .calendar-grid {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .calendar-day-label {
+  background: rgba(255, 255, 255, 0.8);
+  color: #64748b;
+}
+
+.app[data-theme="light"] .calendar-day-cell {
+  background: #f8fafc;
+}
+
+.app[data-theme="light"] .calendar-day-cell:hover {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.app[data-theme="light"] .calendar-day-cell.today {
+  background: rgba(0, 217, 255, 0.08);
+}
+
+.app[data-theme="light"] .day-number {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .modal-overlay {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.app[data-theme="light"] .modal-content {
+  background: #fff;
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
+}
+
+.app[data-theme="light"] .modal-content h3 {
+  color: #00ff88;
+}
+
+.app[data-theme="light"] .modal-info,
+.app[data-theme="light"] .modal-value {
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .modal-label {
+  color: #64748b;
+}

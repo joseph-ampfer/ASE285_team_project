@@ -1,8 +1,11 @@
 // routes/api.js - REST API endpoints using Mongoose
 import express from 'express';
 import Post, { KanbanStatus } from '../models/Post.js';
+import AppSettings from '../models/AppSettings.js';
 import { getNextId } from '../util/util.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
+
+const SETTINGS_ID = 'global';
 
 export function createApiRouter() {
   const router = express.Router();
@@ -161,6 +164,39 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error fetching gamification history:', error);
       res.status(500).json({ error: 'Failed to fetch gamification history' });
+    }
+  });
+
+  // GET /api/settings - get app settings (e.g. theme)
+  router.get('/settings', async (_req, res) => {
+    try {
+      let settings = await AppSettings.findById(SETTINGS_ID);
+      if (!settings) {
+        settings = await AppSettings.create({ _id: SETTINGS_ID });
+      }
+      res.json({ theme: settings.theme });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // PUT /api/settings - update app settings
+  router.put('/settings', async (req, res) => {
+    try {
+      const { theme } = req.body || {};
+      if (theme !== undefined && theme !== 'dark' && theme !== 'light') {
+        return res.status(400).json({ error: 'theme must be "dark" or "light"' });
+      }
+      const settings = await AppSettings.findByIdAndUpdate(
+        SETTINGS_ID,
+        { ...(theme !== undefined && { theme }) },
+        { new: true, upsert: true }
+      );
+      res.json({ theme: settings.theme });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      res.status(500).json({ error: 'Failed to update settings' });
     }
   });
 
