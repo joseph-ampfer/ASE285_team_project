@@ -4,6 +4,7 @@ import TodoList from './components/TodoList'
 import AddTodo from './components/AddTodo'
 import EditTodo from './components/EditTodo'
 import CalendarView from './components/CalendarView'
+import KanbanView from './components/KanbanView'
 import './App.css'
 
 // API base URL - uses Vite proxy in development
@@ -14,7 +15,7 @@ function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [editingTodo, setEditingTodo] = useState(null)
-  const [currentView, setCurrentView] = useState('list') // 'list' or 'calendar'
+  const [currentView, setCurrentView] = useState('list') // 'list', 'calendar', or 'kanban'
 
   // Fetch all todos on component mount
   useEffect(() => {
@@ -37,7 +38,7 @@ function App() {
 
   const addTodo = async (title, date, description) => {
     try {
-      const response = await axios.post(API_URL, { title, date, description })
+      const response = await axios.post(API_URL, { title, date, description, status: 'todo' })
       setTodos([...todos, response.data])
       setError(null)
     } catch (err) {
@@ -46,9 +47,12 @@ function App() {
     }
   }
 
-  const updateTodo = async (id, title, date, description) => {
+  const updateTodo = async (id, title, date, description, status) => {
     try {
-      const response = await axios.put(`${API_URL}/${id}`, { title, date, description })
+      const payload = { title, date, description }
+      if (status) payload.status = status
+
+      const response = await axios.put(`${API_URL}/${id}`, payload)
       setTodos(todos.map(todo =>
         todo._id === id ? response.data : todo
       ))
@@ -79,6 +83,38 @@ function App() {
     setEditingTodo(null)
   }
 
+  const renderContent = () => {
+    if (loading) return <div className="loading">Loading todos...</div>
+
+    switch (currentView) {
+      case 'calendar':
+        return <CalendarView todos={todos} />
+      case 'kanban':
+        return <KanbanView todos={todos} onUpdateTodo={updateTodo} />
+      case 'list':
+      default:
+        return (
+          <>
+            {editingTodo ? (
+              <EditTodo
+                todo={editingTodo}
+                onUpdate={updateTodo}
+                onCancel={cancelEditing}
+              />
+            ) : (
+              <AddTodo onAdd={addTodo} />
+            )}
+
+            <TodoList
+              todos={todos}
+              onEdit={startEditing}
+              onDelete={deleteTodo}
+            />
+          </>
+        )
+    }
+  }
+
   return (
     <div className="app">
       <header className="app-header">
@@ -90,13 +126,19 @@ function App() {
             className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
             onClick={() => setCurrentView('list')}
           >
-            📋 List View
+            📋 List
+          </button>
+          <button
+            className={`nav-btn ${currentView === 'kanban' ? 'active' : ''}`}
+            onClick={() => setCurrentView('kanban')}
+          >
+            ⚡ Kanban
           </button>
           <button
             className={`nav-btn ${currentView === 'calendar' ? 'active' : ''}`}
             onClick={() => setCurrentView('calendar')}
           >
-            📅 Calendar View
+            📅 Calendar
           </button>
         </nav>
       </header>
@@ -109,33 +151,8 @@ function App() {
       )}
 
       <main className="app-main">
-        {currentView === 'list' ? (
-          <>
-            {editingTodo ? (
-              <EditTodo
-                todo={editingTodo}
-                onUpdate={updateTodo}
-                onCancel={cancelEditing}
-              />
-            ) : (
-              <AddTodo onAdd={addTodo} />
-            )}
-
-            {loading ? (
-              <div className="loading">Loading todos...</div>
-            ) : (
-              <TodoList
-                todos={todos}
-                onEdit={startEditing}
-                onDelete={deleteTodo}
-              />
-            )}
-          </>
-        ) : (
-          <CalendarView todos={todos} />
-        )}
+        {renderContent()}
       </main>
-
 
       <footer className="app-footer">
         <p>ASE285 Team Project</p>

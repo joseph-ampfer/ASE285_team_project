@@ -24,6 +24,13 @@ function TaskDetailModal({ task, onClose }) {
                         </div>
 
                         <div className="info-group" style={{ marginTop: '1rem' }}>
+                            <span className="modal-label">Status</span>
+                            <p className="modal-value" style={{ textTransform: 'capitalize' }}>
+                                {task.status?.replace('-', ' ') || 'Todo'}
+                            </p>
+                        </div>
+
+                        <div className="info-group" style={{ marginTop: '1rem' }}>
                             <span className="modal-label">Due Date</span>
                             <p className="modal-value">📅 {task.date}</p>
                         </div>
@@ -39,7 +46,7 @@ function TaskDetailModal({ task, onClose }) {
                     <button
                         className="btn btn-primary btn-close"
                         onClick={onClose}
-                        >
+                    >
                         Close
                     </button>
                 </div>
