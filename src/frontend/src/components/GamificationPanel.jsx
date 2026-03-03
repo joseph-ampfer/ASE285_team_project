@@ -39,7 +39,7 @@ function GamificationPanel({ stats, history, open, onToggle }) {
         <span className="gp-toggle-inner">
           <span className="gp-toggle-points-wrap">
             <span className="gp-toggle-points">{points ?? 0}</span>
-            <span className="gp-toggle-pt">pt</span>
+            <span className="gp-toggle-pt">pts</span>
           </span>
           <span className="gp-toggle-meta">
             Lv.{level ?? 1} · 🔥 {streakCount ?? 0}

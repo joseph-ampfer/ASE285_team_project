@@ -29,16 +29,15 @@
   color: #fff;
   cursor: pointer;
   font-size: 0.9rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s;
   overflow: hidden;
 }
 
 .gp-toggle:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
 }
 
 /* level gauge */    
@@ -252,6 +251,12 @@
   background: rgba(255, 255, 255, 0.9);
   border-color: rgba(0, 0, 0, 0.12);
   color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-toggle-points {
+  background: none;
+  color: #109e92;
+  -webkit-text-fill-color: #109e92;
 }
 
 .app[data-theme="light"] .gp-toggle-pt,
