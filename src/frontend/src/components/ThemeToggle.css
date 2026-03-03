@@ -1,8 +1,4 @@
 .theme-toggle-wrap {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 20;
   display: flex;
   align-items: center;
   gap: 0.5rem;

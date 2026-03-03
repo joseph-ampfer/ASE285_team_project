@@ -174,7 +174,10 @@ export function createApiRouter() {
       if (!settings) {
         settings = await AppSettings.create({ _id: SETTINGS_ID });
       }
-      res.json({ theme: settings.theme });
+      res.json({
+        theme: settings.theme,
+        canvasApiToken: settings.canvasApiToken ?? '',
+      });
     } catch (error) {
       console.error('Error fetching settings:', error);
       res.status(500).json({ error: 'Failed to fetch settings' });
@@ -184,16 +187,22 @@ export function createApiRouter() {
   // PUT /api/settings - update app settings
   router.put('/settings', async (req, res) => {
     try {
-      const { theme } = req.body || {};
+      const { theme, canvasApiToken } = req.body || {};
       if (theme !== undefined && theme !== 'dark' && theme !== 'light') {
         return res.status(400).json({ error: 'theme must be "dark" or "light"' });
       }
+      const update = {};
+      if (theme !== undefined) update.theme = theme;
+      if (canvasApiToken !== undefined) update.canvasApiToken = String(canvasApiToken);
       const settings = await AppSettings.findByIdAndUpdate(
         SETTINGS_ID,
-        { ...(theme !== undefined && { theme }) },
+        update,
         { new: true, upsert: true }
       );
-      res.json({ theme: settings.theme });
+      res.json({
+        theme: settings.theme,
+        canvasApiToken: settings.canvasApiToken ?? '',
+      });
     } catch (error) {
       console.error('Error updating settings:', error);
       res.status(500).json({ error: 'Failed to update settings' });

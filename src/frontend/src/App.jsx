@@ -7,6 +7,7 @@ import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
 import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
+import CanvasIntegration from './components/CanvasIntegration'
 import './App.css'
 
 // API base URL - uses Vite proxy in development
@@ -181,7 +182,11 @@ function App() {
 
   return (
     <div className="app" data-theme={theme}>
-      <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+      <div className="app-top-controls">
+        <CanvasIntegration />
+        <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+      </div>
+
       <GamificationPanel
         stats={stats}
         history={history}

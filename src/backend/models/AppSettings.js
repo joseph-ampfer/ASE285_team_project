@@ -11,6 +11,10 @@ const appSettingsSchema = new mongoose.Schema(
       enum: ['dark', 'light'],
       default: 'dark',
     },
+    canvasApiToken: {
+      type: String,
+      default: '',
+    },
   },
   { timestamps: true }
 );
