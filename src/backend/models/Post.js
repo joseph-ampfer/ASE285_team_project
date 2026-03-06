@@ -28,9 +28,24 @@ const postSchema = new mongoose.Schema({
     enum: Object.values(KanbanStatus),
     default: KanbanStatus.TODO,
   },
-  completed: {
-    type: Boolean,
-    default: false
+  subtasks: {
+    type: [
+      {
+        id: {
+          type: Number,
+          required: true
+        },
+        title: {
+          type: String,
+          required: true
+        },
+        completed: {
+          type: Boolean,
+          default: false
+        }
+      }
+    ],
+    default: []
   }
 });
 

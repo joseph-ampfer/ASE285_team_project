@@ -34,7 +34,6 @@ describe('API Routes', () => {
 
       expect(res.status).toBe(201)
       expect(res.body.title).toBe('Test Post')
-      expect(res.body.completed).toBe(true)
     })
   })
 

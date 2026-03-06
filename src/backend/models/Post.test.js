@@ -17,8 +17,7 @@ describe('Post model', () => {
 
     await post.validate()
 
-    expect(post.status).toBe(KanbanStatus.TODO)
-    expect(post.completed).toBe(false)
+    expect(post.status).toBe(KanbanStatus.TODO) 
     expect(post.description).toBe('')
   })
 

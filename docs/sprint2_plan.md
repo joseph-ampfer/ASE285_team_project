@@ -89,7 +89,7 @@ This is a brand-new feature for Sprint 2. No Sprint 1 carry-over.
 
 | Task | Details |
 |------|---------|
-| Add checkbox to each sub-task | Toggling it sets `completed: true` via API |
+| Add checkbox to each sub-task | Toggling it sets kanban status to `done` via API |
 | Parent task stays incomplete | Completing a sub-task does not automatically complete the parent |
 | Acceptance criteria | Complete sub-task "Problem 1" — verify checkbox is checked, parent task remains incomplete |
 
