@@ -31,5 +31,18 @@ describe('Post model', () => {
 
     await expect(post.validate()).rejects.toThrow()
   })
+
+  it('creates subtasks with default completed state', async () => {
+    const post = new Post({
+      _id: 1,
+      title: 'Task',
+      date: '2026-01-01',
+      subtasks: [{ id: 1, title: 'Subtask' }]
+    })
+
+    await post.validate()
+
+    expect(post.subtasks[0].completed).toBe(false)
+  })
 })
 
