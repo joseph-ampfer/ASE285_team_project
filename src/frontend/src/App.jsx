@@ -44,11 +44,8 @@ function App() {
     }
   }
 
-  const updateTodo = async (id, title, date, description, status) => {
+  const updateTodo = async (id, payload) => {
     try {
-      const payload = { title, date, description }
-      if (status) payload.status = status
-
       const response = await axios.put(`${API_URL}/${id}`, payload)
       setTodos(todos.map(todo =>
         todo._id === id ? response.data : todo
@@ -110,6 +107,9 @@ function App() {
         return (
           <CalendarView 
             todos={todos}
+            onAddTask={addTodo}
+            onUpdateTask={updateTodo}
+            onDeleteTask={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask} 
           />
@@ -118,7 +118,9 @@ function App() {
         return (
           <KanbanView 
             todos={todos} 
-            onUpdateTodo={updateTodo}
+            onAdd={addTodo}
+            onEdit={updateTodo} 
+            onDelete={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask}
           />
@@ -126,15 +128,14 @@ function App() {
       case 'list':
       default:
         return (
-
-            <TodoList
-              todos={todos}
-              onEdit={startEditing}
-              onDelete={deleteTodo}
-              onAddSubtask={addSubtask}
-              onToggleSubtask={toggleSubtask}
-            />
-          </>
+          <TodoList
+            todos={todos}
+            onAdd={addTodo}
+            onEdit={updateTodo}
+            onDelete={deleteTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+          />
         )
     }
   }
