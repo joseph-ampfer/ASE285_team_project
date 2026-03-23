@@ -34,6 +34,11 @@ function App() {
     fetchTodos()
     fetchGamification()
     fetchSettings()
+    axios.get('/api/settings').then((r) => {
+      if (r.data?.canvasApiToken?.trim()) {
+        return axios.post('/api/canvas/sync').then(() => fetchTodos()).catch(() => {})
+      }
+    }).catch(() => {})
   }, [])
 
   // Apply theme to body for global styles
@@ -183,7 +188,7 @@ function App() {
   return (
     <div className="app" data-theme={theme}>
       <div className="app-top-controls">
-        <CanvasIntegration />
+        <CanvasIntegration onSyncComplete={fetchTodos} />
         <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
       </div>
 

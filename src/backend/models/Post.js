@@ -35,7 +35,9 @@ const postSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
     default: null,
-  }
+  },
+  canvasAssignmentId: { type: Number, default: null },
+  canvasCourseId: { type: Number, default: null },
 });
 
 const Post = mongoose.model('Post', postSchema, 'posts');

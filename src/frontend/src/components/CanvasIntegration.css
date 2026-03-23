@@ -153,6 +153,58 @@
   color: #00ff88;
 }
 
+.canvas-integration-actions {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.canvas-integration-verify-btn,
+.canvas-integration-sync-btn {
+  width: 100%;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.canvas-integration-verify-btn {
+  color: #1a1a2e;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.canvas-integration-verify-btn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.canvas-integration-sync-btn {
+  color: #1a1a2e;
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+}
+
+.canvas-integration-sync-btn:hover:not(:disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+.canvas-integration-verify-btn:disabled,
+.canvas-integration-sync-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.canvas-integration-verify-msg,
+.canvas-integration-sync-msg {
+  margin-top: 0.25rem;
+}
+
 /* Light theme */
 body[data-theme="light"] .canvas-integration-help-btn {
   color: #64748b;
@@ -208,4 +260,13 @@ body[data-theme="light"] .canvas-integration-input::placeholder {
 
 body[data-theme="light"] .canvas-integration-message {
   color: #059669;
+}
+
+body[data-theme="light"] .canvas-integration-actions {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+body[data-theme="light"] .canvas-integration-verify-btn {
+  background: rgba(0, 0, 0, 0.08);
+  color: #1e293b;
 }
