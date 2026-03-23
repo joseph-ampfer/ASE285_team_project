@@ -115,7 +115,6 @@ function App() {
           todo._id === id ? data : todo
         ))
       }
-      setEditingTodo(null)
       setError(null)
     } catch (err) {
       console.error('Error updating todo:', err)

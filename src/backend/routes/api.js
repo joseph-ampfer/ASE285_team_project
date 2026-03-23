@@ -204,6 +204,9 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error updating settings:', error);
       res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+  
   // POST /api/posts/:id/subtasks - Add a subtask
   router.post('/posts/:id/subtasks', async (req, res) => {
     try {

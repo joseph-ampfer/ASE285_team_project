@@ -6,7 +6,7 @@ const KanbanStatus = Object.freeze({
   DONE: 'done',
 });
 
-const postSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema({  
   _id: {
     type: Number,
     required: true,
@@ -35,6 +35,7 @@ const postSchema = new mongoose.Schema({
   completedAt: {
     type: Date,
     default: null,
+  },
   subtasks: {
     type: [
       {
