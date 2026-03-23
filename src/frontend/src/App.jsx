@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import TodoList from './components/TodoList'
-import AddTodo from './components/AddTodo'
-import EditTodo from './components/EditTodo'
 import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
 import './App.css'
@@ -14,7 +12,6 @@ function App() {
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [editingTodo, setEditingTodo] = useState(null)
   const [currentView, setCurrentView] = useState('list') // 'list', 'calendar', or 'kanban'
 
   // Fetch all todos on component mount
@@ -47,16 +44,12 @@ function App() {
     }
   }
 
-  const updateTodo = async (id, title, date, description, status) => {
+  const updateTodo = async (id, payload) => {
     try {
-      const payload = { title, date, description }
-      if (status) payload.status = status
-
       const response = await axios.put(`${API_URL}/${id}`, payload)
       setTodos(todos.map(todo =>
         todo._id === id ? response.data : todo
       ))
-      setEditingTodo(null)
       setError(null)
     } catch (err) {
       console.error('Error updating todo:', err)
@@ -73,14 +66,6 @@ function App() {
       console.error('Error deleting todo:', err)
       setError('Failed to delete todo')
     }
-  }
-
-  const startEditing = (todo) => {
-    setEditingTodo(todo)
-  }
-
-  const cancelEditing = () => {
-    setEditingTodo(null)
   }
 
   const addSubtask = async (taskId, title) => {
@@ -122,6 +107,9 @@ function App() {
         return (
           <CalendarView 
             todos={todos}
+            onAddTask={addTodo}
+            onUpdateTask={updateTodo}
+            onDeleteTask={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask} 
           />
@@ -130,7 +118,9 @@ function App() {
         return (
           <KanbanView 
             todos={todos} 
-            onUpdateTodo={updateTodo}
+            onAdd={addTodo}
+            onEdit={updateTodo} 
+            onDelete={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask}
           />
@@ -138,25 +128,14 @@ function App() {
       case 'list':
       default:
         return (
-          <>
-            {editingTodo ? (
-              <EditTodo
-                todo={editingTodo}
-                onUpdate={updateTodo}
-                onCancel={cancelEditing}
-              />
-            ) : (
-              <AddTodo onAdd={addTodo} />
-            )}
-
-            <TodoList
-              todos={todos}
-              onEdit={startEditing}
-              onDelete={deleteTodo}
-              onAddSubtask={addSubtask}
-              onToggleSubtask={toggleSubtask}
-            />
-          </>
+          <TodoList
+            todos={todos}
+            onAdd={addTodo}
+            onEdit={updateTodo}
+            onDelete={deleteTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+          />
         )
     }
   }

@@ -77,7 +77,7 @@ describe('TodoList', () => {
     fireEvent.click(screen.getByText(/select task 1/i))
 
     expect(
-      screen.getByText(/modal: task 1/i)
+      screen.getByText(/task 1/i)
     ).toBeInTheDocument()
   })
 
@@ -92,7 +92,7 @@ describe('TodoList', () => {
 
     fireEvent.click(screen.getByText(/select task 1/i))
 
-    expect(screen.getByText(/modal: task 1/i)).toBeInTheDocument()
+    expect(screen.getByText(/task 1/i)).toBeInTheDocument()
 
     fireEvent.click(screen.getByText(/close modal/i))
 

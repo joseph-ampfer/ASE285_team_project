@@ -2,9 +2,10 @@ import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import './CalendarView.css'
 
-function CalendarView({ todos, onAddSubtask, onToggleSubtask }) {
+function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggleSubtask }) {
     const [currentMonth, setCurrentMonth] = useState(new Date())
     const [selectedTaskId, setSelectedTaskId] = useState(null)
+    const [modalMode, setModalMode] = useState('view')
 
     const selectedTask = todos.find(t => t._id === selectedTaskId)
 
@@ -58,6 +59,8 @@ function CalendarView({ todos, onAddSubtask, onToggleSubtask }) {
             date.getFullYear() === today.getFullYear()
     }
 
+    const handleCloseModal = () => setSelectedTaskId(null)
+
     return (
         <div className="calendar-container">
             <header className="calendar-header">
@@ -99,16 +102,19 @@ function CalendarView({ todos, onAddSubtask, onToggleSubtask }) {
                 })}
             </div>
 
-            {selectedTask && (
-                <TaskDetailModal
-                    task={selectedTask}
-                    onClose={() => setSelectedTaskId(null)}
-                    onAddSubtask={onAddSubtask}
-                    onToggleSubtask={onToggleSubtask}
-                />
-            )}
-        </div>
-    )
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          mode={modalMode}
+          onClose={handleCloseModal}
+          onUpdateTask={onUpdateTask}
+          onDeleteTask={onDeleteTask}
+          onAddSubtask={onAddSubtask}
+          onToggleSubtask={onToggleSubtask}
+        />
+      )}
+    </div>
+  )
 }
 
 export default CalendarView
