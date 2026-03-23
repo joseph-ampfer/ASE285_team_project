@@ -19,9 +19,9 @@ describe('Kanban View Acceptance Tests', () => {
     test('R3.2: Drag task from To-Do to Done → verify task appears in Done column', async () => {
         // 1. Navigate to Kanban View
         // 2. Identify a task element in the 'To-Do' column
-        // 3. Perform a drag-and-drop operation from 'To-Do' column to 'Completed' column
+        // 3. Perform a drag-and-drop operation from 'To-Do' column to 'Done' column
         // 4. Verify task is removed from 'To-Do'
-        // 5. Verify task is added to 'Completed' column
+        // 5. Verify task is added to 'Done' column
         // 6. Refresh page (optional) to verify backend persistence
     });
 

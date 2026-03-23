@@ -1,9 +1,17 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TodoItem from './TodoItem'
 import TaskDetailModal from './TaskDetailModal'
 
-function TodoList({ todos, onEdit, onDelete }) {
+function TodoList({ todos, onEdit, onDelete, onAddSubtask, onToggleSubtask }) {
   const [selectedTask, setSelectedTask] = useState(null)
+  
+  useEffect(() => {
+    if (!selectedTask) return
+
+    const updated = todos.find(t => t._id === selectedTask._id)
+    if (updated) setSelectedTask(updated)
+
+  }, [todos])
 
   if (todos.length === 0) {
     return (
@@ -30,6 +38,8 @@ function TodoList({ todos, onEdit, onDelete }) {
           <TaskDetailModal
             task={selectedTask}
             onClose={() => setSelectedTask(null)}
+            onAddSubtask={onAddSubtask}
+            onToggleSubtask={onToggleSubtask}
           />
         )}
       </div>

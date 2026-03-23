@@ -1,7 +1,8 @@
+import { useState } from 'react'
 import Portal from './Portal'
 import './CalendarView.css'
 
-function TaskDetailModal({ task, onClose }) {
+function TaskDetailModal({ task, onClose, onAddSubtask, onToggleSubtask }) {
     if (!task) return null
 
     // Handle click on overlay to close
@@ -10,6 +11,16 @@ function TaskDetailModal({ task, onClose }) {
             onClose()
         }
     }
+
+    const handleAddSubtask = () => {
+        const title = newSubtask.trim()
+        if (!title) return
+
+        onAddSubtask(task._id, title)
+        setNewSubtask('')
+    }
+
+    const [newSubtask, setNewSubtask] = useState('')
 
     return (
         <Portal>
@@ -41,6 +52,40 @@ function TaskDetailModal({ task, onClose }) {
                                 <p className="modal-value">{task.description}</p>
                             </div>
                         )}
+                        
+                        {task.subtasks && task.subtasks.length > 0 && (
+                            <div className="info-group" style={{ marginTop: '1rem' }}>
+                                <span className="modal-label">Subtasks</span>
+
+                                <ul className="subtask-list">
+                                {task.subtasks.map(subtask => (
+                                    <li key={subtask.id} className="subtask-item">
+                                    <input
+                                        type="checkbox"
+                                        checked={subtask.completed}
+                                        onChange={() => onToggleSubtask(task._id, subtask.id)}
+                                    />
+                                    <span className={subtask.completed ? 'completed' : ''}>
+                                        {subtask.title}
+                                    </span>
+                                    </li>
+                                ))}
+                                </ul>
+
+                            </div>
+                        )}
+                        <div className="subtask-add">
+                            <input
+                                type="text"
+                                placeholder="Add subtask..."
+                                value={newSubtask}
+                                onChange={(e) => setNewSubtask(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleAddSubtask()
+                                }}
+                            />
+                            <button onClick={handleAddSubtask}>Add</button>
+                        </div>
                     </div>
 
                     <button

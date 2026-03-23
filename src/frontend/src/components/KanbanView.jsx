@@ -3,14 +3,16 @@ import TaskDetailModal from './TaskDetailModal'
 import './KanbanView.css'
 
 const COLUMNS = [
-    { id: 'todo', title: 'Start', emoji: '📥' },
+    { id: 'todo', title: 'Todo', emoji: '📥' },
     { id: 'in-progress', title: 'In Progress', emoji: '⚡' },
-    { id: 'done', title: 'Completed', emoji: '✅' }
+    { id: 'done', title: 'Done', emoji: '✅' }
 ]
 
-function KanbanView({ todos, onUpdateTodo }) {
-    const [selectedTask, setSelectedTask] = useState(null)
+function KanbanView({ todos, onUpdateTodo, onAddSubtask, onToggleSubtask }) {
+    const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [dragOverColumn, setDragOverColumn] = useState(null)
+
+    const selectedTask = todos.find(t => t._id === selectedTaskId)
 
     const handleDragStart = (e, todoId) => {
         e.dataTransfer.setData('todoId', todoId)
@@ -71,7 +73,7 @@ function KanbanView({ todos, onUpdateTodo }) {
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, todo._id)}
                                         onDragEnd={handleDragEnd}
-                                        onClick={() => setSelectedTask(todo)}
+                                        onClick={() => setSelectedTaskId(todo._id)}
                                     >
                                         {column.id === 'in-progress' && index === 0 && (
                                             <span className="focus-badge">Focus</span>
@@ -91,7 +93,9 @@ function KanbanView({ todos, onUpdateTodo }) {
             {selectedTask && (
                 <TaskDetailModal
                     task={selectedTask}
-                    onClose={() => setSelectedTask(null)}
+                    onClose={() => setSelectedTaskId(null)}
+                    onAddSubtask={onAddSubtask}
+                    onToggleSubtask={onToggleSubtask}
                 />
             )}
         </div>

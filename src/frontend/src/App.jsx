@@ -83,14 +83,58 @@ function App() {
     setEditingTodo(null)
   }
 
+  const addSubtask = async (taskId, title) => {
+    try {
+      const response = await axios.post(`/api/posts/${taskId}/subtasks`, { title })
+
+      setTodos(todos.map(todo =>
+        todo._id === taskId ? response.data : todo
+      ))
+
+      setError(null)
+    } catch (err) {
+      console.error('Error adding subtask:', err)
+      setError('Failed to add subtask')
+    }
+  }
+
+  const toggleSubtask = async (taskId, subtaskId) => {
+    try {
+      const response = await axios.patch(
+        `/api/posts/${taskId}/subtasks/${subtaskId}`
+      )
+
+      setTodos(todos.map(todo =>
+        todo._id === taskId ? response.data : todo
+      ))
+
+    } catch (err) {
+      console.error('Error toggling subtask:', err)
+      setError('Failed to update subtask')
+    }
+  }
+
   const renderContent = () => {
     if (loading) return <div className="loading">Loading todos...</div>
 
     switch (currentView) {
       case 'calendar':
-        return <CalendarView todos={todos} />
+        return (
+          <CalendarView 
+            todos={todos}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask} 
+          />
+        )
       case 'kanban':
-        return <KanbanView todos={todos} onUpdateTodo={updateTodo} />
+        return (
+          <KanbanView 
+            todos={todos} 
+            onUpdateTodo={updateTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+          />
+        ) 
       case 'list':
       default:
         return (
@@ -109,6 +153,8 @@ function App() {
               todos={todos}
               onEdit={startEditing}
               onDelete={deleteTodo}
+              onAddSubtask={addSubtask}
+              onToggleSubtask={toggleSubtask}
             />
           </>
         )
