@@ -1,0 +1,310 @@
+.gp-root {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 20;
+}
+
+.gp-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 18;
+  background: transparent;
+  border: none;
+  cursor: default;
+  padding: 0;
+}
+
+.gp-toggle {
+  position: relative;
+  background: rgba(0, 0, 0, 0.65);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.5rem 1rem 0.5rem 1.1rem;
+  min-height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.2s;
+  overflow: hidden;
+}
+
+.gp-toggle:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* level gauge */    
+.gp-toggle-gauge {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(180deg, rgba(0, 255, 136, 0.35), rgba(0, 217, 255, 0.25));
+  border-radius: 999px;
+  z-index: 0;
+  transition: height 0.35s ease-out;
+}
+
+.gp-toggle-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.gp-toggle-points-wrap {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.2rem;
+}
+
+.gp-toggle-points {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gp-toggle-pt {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #94a3b8;
+  -webkit-text-fill-color: initial;
+}
+
+.gp-toggle-meta {
+  font-size: 0.7rem;
+  color: #a0aec0;
+}
+
+.gp-card {
+  position: absolute;
+  top: 0;
+  right: 100%;
+  margin-right: 0.75rem;
+  width: 280px;
+  max-height: 420px;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.7));
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transform-origin: top right;
+  transform: scale(0.96) translateX(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+
+.gp-open .gp-card {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1) translateX(0);
+}
+
+.gp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.gp-level-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #a0aec0;
+}
+
+.gp-level-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gp-points {
+  text-align: right;
+}
+
+.gp-points-value {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.gp-points-sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.gp-progress {
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.gp-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  box-shadow: 0 0 12px rgba(0, 217, 255, 0.7);
+}
+
+.gp-streak {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+  color: #cbd5f5;
+  margin-bottom: 0.75rem;
+}
+
+.gp-streak-value {
+  font-weight: 600;
+}
+
+.gp-history {
+  border-top: 1px solid rgba(148, 163, 184, 0.25);
+  padding-top: 0.6rem;
+}
+
+.gp-history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: #a0aec0;
+  margin-bottom: 0.4rem;
+}
+
+.gp-history-count {
+  font-size: 0.75rem;
+}
+
+.gp-history-list {
+  max-height: 220px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-right: 0.25rem;
+}
+
+.gp-history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 0.45rem 0.5rem;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+}
+
+.gp-history-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.gp-history-title {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #e2e8f0;
+}
+
+.gp-history-date {
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+.gp-history-points {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #00ff88;
+}
+
+.app[data-theme="light"] .gp-toggle {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-toggle-points {
+  background: none;
+  color: #109e92;
+  -webkit-text-fill-color: #109e92;
+}
+
+.app[data-theme="light"] .gp-toggle-pt,
+.app[data-theme="light"] .gp-toggle-meta {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .gp-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.95));
+  border-color: rgba(0, 0, 0, 0.08);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
+}
+
+.app[data-theme="light"] .gp-level-label,
+.app[data-theme="light"] .gp-points-sub,
+.app[data-theme="light"] .gp-history-header,
+.app[data-theme="light"] .gp-history-date {
+  color: #64748b;
+}
+
+.app[data-theme="light"] .gp-points-value,
+.app[data-theme="light"] .gp-streak,
+.app[data-theme="light"] .gp-history-title {
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-progress {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .gp-history {
+  border-top-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .gp-history-item {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(0, 0, 0, 0.06);
+}
+
+@media (max-width: 640px) {
+  .gp-root {
+    top: 0.75rem;
+    left: 0.75rem;
+  }
+
+  .gp-card {
+    width: 260px;
+  }
+}
+

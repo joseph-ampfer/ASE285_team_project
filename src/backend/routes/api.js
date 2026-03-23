@@ -1,7 +1,11 @@
 // routes/api.js - REST API endpoints using Mongoose
 import express from 'express';
-import Post from '../models/Post.js';
+import Post, { KanbanStatus } from '../models/Post.js';
+import AppSettings from '../models/AppSettings.js';
 import { getNextId } from '../util/util.js';
+import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
+
+const SETTINGS_ID = 'global';
 
 export function createApiRouter() {
   const router = express.Router();
@@ -84,6 +88,7 @@ export function createApiRouter() {
       if (status !== undefined) update.status = status;
       if (subtasks !== undefined) update.subtasks = subtasks;
 
+      const previous = await Post.findById(id);
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         update,
@@ -94,7 +99,21 @@ export function createApiRouter() {
         return res.status(404).json({ error: 'Post not found' });
       }
 
+      let gamification = null;
+      const isNowDone = updatedPost.status === KanbanStatus.DONE;
+      const wasDoneBefore = previous?.status === KanbanStatus.DONE;
+
+      if (isNowDone && !wasDoneBefore) {
+        updatedPost.completedAt = new Date();
+        await updatedPost.save();
+        gamification = await awardForTaskCompletion(updatedPost);
+      }
+
       console.log('Post updated:', updatedPost);
+      if (gamification) {
+        return res.json({ post: updatedPost, gamification });
+      }
+
       res.json(updatedPost);
     } catch (error) {
       console.error('Error updating post:', error);
@@ -124,6 +143,67 @@ export function createApiRouter() {
     }
   });
 
+  // GET /api/gamification/stats - current points/level/streak
+  router.get('/gamification/stats', async (_req, res) => {
+    try {
+      const stats = await getStats();
+      res.json(stats);
+    } catch (error) {
+      console.error('Error fetching gamification stats:', error);
+      res.status(500).json({ error: 'Failed to fetch gamification stats' });
+    }
+  });
+
+  // GET /api/gamification/history - recent completion history
+  router.get('/gamification/history', async (_req, res) => {
+    try {
+      const events = await getHistory(100);
+      res.json(events);
+    } catch (error) {
+      console.error('Error fetching gamification history:', error);
+      res.status(500).json({ error: 'Failed to fetch gamification history' });
+    }
+  });
+
+  // GET /api/settings - get app settings (e.g. theme)
+  router.get('/settings', async (_req, res) => {
+    try {
+      let settings = await AppSettings.findById(SETTINGS_ID);
+      if (!settings) {
+        settings = await AppSettings.create({ _id: SETTINGS_ID });
+      }
+      res.json({
+        theme: settings.theme,
+        canvasApiToken: settings.canvasApiToken ?? '',
+      });
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+      res.status(500).json({ error: 'Failed to fetch settings' });
+    }
+  });
+
+  // PUT /api/settings - update app settings
+  router.put('/settings', async (req, res) => {
+    try {
+      const { theme, canvasApiToken } = req.body || {};
+      if (theme !== undefined && theme !== 'dark' && theme !== 'light') {
+        return res.status(400).json({ error: 'theme must be "dark" or "light"' });
+      }
+      const update = {};
+      if (theme !== undefined) update.theme = theme;
+      if (canvasApiToken !== undefined) update.canvasApiToken = String(canvasApiToken);
+      const settings = await AppSettings.findByIdAndUpdate(
+        SETTINGS_ID,
+        update,
+        { new: true, upsert: true }
+      );
+      res.json({
+        theme: settings.theme,
+        canvasApiToken: settings.canvasApiToken ?? '',
+      });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      res.status(500).json({ error: 'Failed to update settings' });
   // POST /api/posts/:id/subtasks - Add a subtask
   router.post('/posts/:id/subtasks', async (req, res) => {
     try {
