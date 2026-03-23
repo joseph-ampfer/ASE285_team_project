@@ -51,7 +51,9 @@ const postSchema = new mongoose.Schema({
       }
     ],
     default: []
-  }
+  },
+  canvasAssignmentId: { type: Number, default: null },
+  canvasCourseId: { type: Number, default: null },
 });
 
 const Post = mongoose.model('Post', postSchema, 'posts');

@@ -8,12 +8,16 @@ const HELP_TOOLTIP_TEXT =
 const HELP_LINK_URL =
   'https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account'
 
-function CanvasIntegration() {
+function CanvasIntegration({ onSyncComplete }) {
   const wrapRef = useRef(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [token, setToken] = useState('')
   const [savedToken, setSavedToken] = useState('')
   const [saving, setSaving] = useState(false)
+  const [verifying, setVerifying] = useState(false)
+  const [verifyMessage, setVerifyMessage] = useState(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState(null)
   const [message, setMessage] = useState(null)
   const [showHelpTooltip, setShowHelpTooltip] = useState(false)
 
@@ -46,6 +50,8 @@ function CanvasIntegration() {
   const handleSave = async () => {
     setSaving(true)
     setMessage(null)
+    setVerifyMessage(null)
+    setSyncMessage(null)
     try {
       await axios.put('/api/settings', { canvasApiToken: token })
       setSavedToken(token)
@@ -55,6 +61,48 @@ function CanvasIntegration() {
       setMessage('Save failed')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleVerify = async () => {
+    setVerifying(true)
+    setVerifyMessage(null)
+    try {
+      const res = await axios.get('/api/canvas/verify')
+      const name = res.data?.user?.name || res.data?.user?.short_name
+      setVerifyMessage(name ? `Connected as ${name}` : 'Connection successful')
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Verification failed'
+      setVerifyMessage(msg)
+    } finally {
+      setVerifying(false)
+    }
+  }
+
+  const handleSyncNow = async () => {
+    setSyncing(true)
+    setSyncMessage(null)
+    setMessage(null)
+    setVerifyMessage(null)
+    try {
+      const res = await axios.post('/api/canvas/sync')
+      const { created = 0, updated = 0, courseCount, errors = [], message: apiMsg } = res.data || {}
+      let msg = apiMsg || `Synced: ${created} created, ${updated} updated`
+      if (!apiMsg) {
+        if (courseCount != null) msg += ` (${courseCount} courses)`
+        if (errors.length) {
+          const errText = errors.map((e) => `${e.course}: ${e.error}`).join('; ')
+          msg += `. Issues: ${errText}`
+        }
+      }
+      setSyncMessage(msg)
+      if (typeof onSyncComplete === 'function') onSyncComplete()
+    } catch (err) {
+      const msg = err.response?.data?.error || err.message || 'Sync failed'
+      setSyncMessage(msg)
+      console.error('Error syncing Canvas:', err)
+    } finally {
+      setSyncing(false)
     }
   }
 
@@ -113,6 +161,34 @@ function CanvasIntegration() {
           {message && (
             <p className="canvas-integration-message" role="status">
               {message}
+            </p>
+          )}
+          <div className="canvas-integration-actions">
+            <button
+              type="button"
+              className="canvas-integration-verify-btn"
+              onClick={handleVerify}
+              disabled={verifying || !savedToken?.trim()}
+            >
+              {verifying ? 'Verifying...' : 'Verify connection'}
+            </button>
+            <button
+              type="button"
+              className="canvas-integration-sync-btn"
+              onClick={handleSyncNow}
+              disabled={syncing || !savedToken?.trim()}
+            >
+              {syncing ? 'Syncing...' : 'Import from Canvas'}
+            </button>
+          </div>
+          {verifyMessage && (
+            <p className="canvas-integration-message canvas-integration-verify-msg" role="status">
+              {verifyMessage}
+            </p>
+          )}
+          {syncMessage && (
+            <p className="canvas-integration-message canvas-integration-sync-msg" role="status">
+              {syncMessage}
             </p>
           )}
         </div>

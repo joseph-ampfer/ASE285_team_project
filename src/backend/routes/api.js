@@ -6,6 +6,7 @@ import { requireAuth } from '../util/auth.js';
 import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
+import { verifyToken, getCourses, getAssignments, getSubmission } from '../services/canvas.js';
 
 const SETTINGS_ID = 'global';
 
@@ -149,7 +150,10 @@ export function createApiRouter() {
       if (title !== undefined) update.title = title;
       if (date !== undefined) update.date = date;
       if (description !== undefined) update.description = description;
-      if (status !== undefined) update.status = status;
+      if (status !== undefined && previous.canvasAssignmentId == null) {
+        update.status = status;
+        update.completed = status === KanbanStatus.DONE;
+      }
       if (subtasks !== undefined) update.subtasks = subtasks;
 
       const previous = await Post.findOne({
@@ -364,6 +368,126 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error deleting subtask:', error);
       res.status(500).json({ error: 'Failed to delete subtask' });
+    }
+  });
+
+  // GET /api/canvas/verify - verify stored Canvas token
+  router.get('/canvas/verify', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ ok: false, error: 'Canvas API token not set' });
+      }
+      const result = await verifyToken(token);
+      if (!result.ok) {
+        return res.status(502).json({ ok: false, error: result.error });
+      }
+      res.json({ ok: true, user: result.user });
+    } catch (error) {
+      console.error('Error verifying Canvas token:', error);
+      res.status(500).json({ ok: false, error: 'Failed to verify' });
+    }
+  });
+
+  // POST /api/canvas/sync
+  router.post('/canvas/sync', async (req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ error: 'Canvas API token not set' });
+      }
+
+      const { ok: coursesOk, courses, error: coursesError } = await getCourses(token);
+      if (!coursesOk) {
+        return res.status(502).json({
+          error: coursesError || 'Canvas API error',
+          details: coursesError,
+        });
+      }
+      if (!courses?.length) {
+        return res.status(200).json({
+          synced: true,
+          created: 0,
+          updated: 0,
+          courseCount: 0,
+          message: 'No courses found for this account',
+        });
+      }
+
+      let created = 0;
+      let updated = 0;
+      const errors = [];
+      const courseId = (c) => (c.id != null ? Number(c.id) : c.id);
+      const courseName = (c) => c.name || c.course_code || `Course ${c.id}`;
+
+      for (const course of courses) {
+        const cid = courseId(course);
+        if (cid == null || Number.isNaN(cid)) {
+          errors.push({ course: courseName(course), error: 'Invalid course id' });
+          continue;
+        }
+        const { ok: assignOk, assignments, error: assignError } = await getAssignments(
+          token,
+          cid
+        );
+        if (!assignOk) {
+          console.warn('[Canvas sync] Assignments failed for course', courseName(course), assignError);
+          errors.push({ course: courseName(course), error: assignError });
+          continue;
+        }
+        if (!assignments?.length) continue;
+
+        for (const a of assignments) {
+          const aid = a.id != null ? Number(a.id) : a.id;
+          const title = a.name || a.title || 'Assignment';
+          const dateStr = a.due_at
+            ? a.due_at.split('T')[0]
+            : new Date().toISOString().slice(0, 10);
+
+          const existing = await Post.findOne({ canvasAssignmentId: aid });
+          if (existing) {
+            existing.title = title;
+            existing.date = dateStr;
+            const subResult = await getSubmission(token, cid, aid);
+            if (subResult.ok && subResult.submitted) {
+              existing.status = KanbanStatus.DONE;
+              existing.completed = true;
+              if (!existing.completedAt) existing.completedAt = new Date();
+            }
+            await existing.save();
+            updated += 1;
+          } else {
+            const nextId = await getNextId();
+            const newPost = new Post({
+              _id: nextId,
+              title,
+              date: dateStr,
+              description: '',
+              status: KanbanStatus.TODO,
+              completed: false,
+              completedAt: null,
+              canvasAssignmentId: aid,
+              canvasCourseId: cid,
+            });
+            await newPost.save();
+            created += 1;
+          }
+        }
+      }
+
+      const payload = {
+        synced: true,
+        created,
+        updated,
+        courseCount: courses.length,
+      };
+      if (errors.length) payload.errors = errors;
+      res.json(payload);
+    } catch (error) {
+      console.error('Error syncing Canvas:', error);
+      res.status(500).json({ error: 'Failed to sync Canvas' });
     }
   });
 
