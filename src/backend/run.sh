@@ -7,5 +7,5 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # Run the application
-echo "Starting Todo App with Mongoose..."
+echo "Starting TaskFlow with Mongoose..."
 npm start
