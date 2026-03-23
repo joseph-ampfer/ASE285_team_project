@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import TodoList from './components/TodoList'
-import AddTodo from './components/AddTodo'
-import EditTodo from './components/EditTodo'
 import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
 import GamificationPanel from './components/GamificationPanel'
@@ -17,7 +15,6 @@ function App() {
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [editingTodo, setEditingTodo] = useState(null)
   const [currentView, setCurrentView] = useState('list') // 'list', 'calendar', or 'kanban'
   const [stats, setStats] = useState({
     points: 0,
@@ -99,11 +96,8 @@ function App() {
     }
   }
 
-  const updateTodo = async (id, title, date, description, status) => {
+  const updateTodo = async (id, payload) => {
     try {
-      const payload = { title, date, description }
-      if (status) payload.status = status
-
       const response = await axios.put(`${API_URL}/${id}`, payload)
       const data = response.data
 
@@ -140,12 +134,35 @@ function App() {
     }
   }
 
-  const startEditing = (todo) => {
-    setEditingTodo(todo)
+  const addSubtask = async (taskId, title) => {
+    try {
+      const response = await axios.post(`/api/posts/${taskId}/subtasks`, { title })
+
+      setTodos(todos.map(todo =>
+        todo._id === taskId ? response.data : todo
+      ))
+
+      setError(null)
+    } catch (err) {
+      console.error('Error adding subtask:', err)
+      setError('Failed to add subtask')
+    }
   }
 
-  const cancelEditing = () => {
-    setEditingTodo(null)
+  const toggleSubtask = async (taskId, subtaskId) => {
+    try {
+      const response = await axios.patch(
+        `/api/posts/${taskId}/subtasks/${subtaskId}`
+      )
+
+      setTodos(todos.map(todo =>
+        todo._id === taskId ? response.data : todo
+      ))
+
+    } catch (err) {
+      console.error('Error toggling subtask:', err)
+      setError('Failed to update subtask')
+    }
   }
 
   const renderContent = () => {
@@ -153,29 +170,38 @@ function App() {
 
     switch (currentView) {
       case 'calendar':
-        return <CalendarView todos={todos} />
+        return (
+          <CalendarView 
+            todos={todos}
+            onAddTask={addTodo}
+            onUpdateTask={updateTodo}
+            onDeleteTask={deleteTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask} 
+          />
+        )
       case 'kanban':
-        return <KanbanView todos={todos} onUpdateTodo={updateTodo} />
+        return (
+          <KanbanView 
+            todos={todos} 
+            onAdd={addTodo}
+            onEdit={updateTodo} 
+            onDelete={deleteTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+          />
+        ) 
       case 'list':
       default:
         return (
-          <>
-            {editingTodo ? (
-              <EditTodo
-                todo={editingTodo}
-                onUpdate={updateTodo}
-                onCancel={cancelEditing}
-              />
-            ) : (
-              <AddTodo onAdd={addTodo} />
-            )}
-
-            <TodoList
-              todos={todos}
-              onEdit={startEditing}
-              onDelete={deleteTodo}
-            />
-          </>
+          <TodoList
+            todos={todos}
+            onAdd={addTodo}
+            onEdit={updateTodo}
+            onDelete={deleteTodo}
+            onAddSubtask={addSubtask}
+            onToggleSubtask={toggleSubtask}
+          />
         )
     }
   }

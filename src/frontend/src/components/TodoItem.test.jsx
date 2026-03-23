@@ -64,8 +64,7 @@ describe('TodoItem', () => {
 
     fireEvent.click(screen.getByTitle('Edit'))
 
-    expect(onEditMock).toHaveBeenCalledWith(mockTodo)
-    expect(onSelectMock).not.toHaveBeenCalled()
+    expect(onSelectMock).toHaveBeenCalledWith(mockTodo, 'edit')
   })
 
   it('calls onDelete if user confirms deletion', () => {

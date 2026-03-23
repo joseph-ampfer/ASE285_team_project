@@ -1,16 +1,21 @@
 import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import './KanbanView.css'
+import { KanbanStatus } from '../../../backend/models/Post'
 
 const COLUMNS = [
-    { id: 'todo', title: 'Start', emoji: '📥' },
-    { id: 'in-progress', title: 'In Progress', emoji: '⚡' },
-    { id: 'done', title: 'Completed', emoji: '✅' }
+    { id: KanbanStatus.TODO, title: 'Todo', emoji: '📥' },
+    { id: KanbanStatus.IN_PROGRESS, title: 'In Progress', emoji: '⚡' },
+    { id: KanbanStatus.DONE, title: 'Done', emoji: '✅' }
 ]
 
-function KanbanView({ todos, onUpdateTodo }) {
-    const [selectedTask, setSelectedTask] = useState(null)
+function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubtask }) {
+    const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [dragOverColumn, setDragOverColumn] = useState(null)
+    const [isCreating, setIsCreating] = useState(false)
+    const [modalMode, setModalMode] = useState('view')
+
+    const selectedTask = todos.find(t => t._id === selectedTaskId)
 
     const handleDragStart = (e, todoId) => {
         e.dataTransfer.setData('todoId', todoId)
@@ -37,12 +42,43 @@ function KanbanView({ todos, onUpdateTodo }) {
 
         const todo = todos.find(t => t._id === todoId)
         if (todo && todo.status !== columnId) {
-            onUpdateTodo(todo._id, todo.title, todo.date, todo.description, columnId)
+            onEdit(todo._id, {
+                title: todo.title,
+                date: todo.date,
+                description: todo.description,
+                status: columnId
+            })
         }
+    }
+        
+    const handleCloseModal = () => {
+        setSelectedTaskId(null)
+        setIsCreating(false)
+        setModalMode('view')
+    }
+
+    const handleAddTask = (form) => {
+        onAdd(form.title, form.date, form.description)
+        handleCloseModal()
+    }
+
+    const handleUpdateTask = (id, form) => {
+        onEdit(id, {
+            title: form.title,
+            date: form.date,
+            description: form.description,
+            status: form.status
+        })
+        handleCloseModal()
+    }
+
+    const handleDeleteTask = (id) => {
+        onDelete(id)
+        handleCloseModal()
     }
 
     const getTasksByStatus = (status) => {
-        return todos.filter(todo => (todo.status || 'todo') === status)
+        return todos.filter(todo => (todo.status || KanbanStatus.TODO) === status)
     }
 
     return (
@@ -63,6 +99,18 @@ function KanbanView({ todos, onUpdateTodo }) {
                                 <span className="column-count">{columnTasks.length}</span>
                             </h3>
 
+                            {column.id === KanbanStatus.TODO && (
+                                <button
+                                className="btn-add-task"
+                                onClick={() => {
+                                    setIsCreating(true)
+                                    setModalMode('create')
+                                }}
+                                >
+                                ➕ Add Task
+                                </button>
+                            )}
+
                             <div className="kanban-tasks">
                                 {columnTasks.map((todo, index) => (
                                     <div
@@ -71,7 +119,7 @@ function KanbanView({ todos, onUpdateTodo }) {
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, todo._id)}
                                         onDragEnd={handleDragEnd}
-                                        onClick={() => setSelectedTask(todo)}
+                                        onClick={() => setSelectedTaskId(todo._id)}
                                     >
                                         {column.id === 'in-progress' && index === 0 && (
                                             <span className="focus-badge">Focus</span>
@@ -88,10 +136,16 @@ function KanbanView({ todos, onUpdateTodo }) {
                 })}
             </div>
 
-            {selectedTask && (
+            {(selectedTask || isCreating) && (
                 <TaskDetailModal
                     task={selectedTask}
-                    onClose={() => setSelectedTask(null)}
+                    mode={isCreating ? 'create' : modalMode}
+                    onClose={handleCloseModal}
+                    onAddTask={handleAddTask}
+                    onUpdateTask={handleUpdateTask}
+                    onDeleteTask={handleDeleteTask}
+                    onAddSubtask={onAddSubtask}
+                    onToggleSubtask={onToggleSubtask}
                 />
             )}
         </div>

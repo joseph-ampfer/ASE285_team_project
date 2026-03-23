@@ -1,39 +1,74 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import TodoItem from './TodoItem'
 import TaskDetailModal from './TaskDetailModal'
 
-function TodoList({ todos, onEdit, onDelete }) {
+function TodoList({ todos, onAdd, onEdit, onDelete, onAddSubtask, onToggleSubtask }) {
   const [selectedTask, setSelectedTask] = useState(null)
+  const [modalMode, setModalMode] = useState('view')
+  const [isCreating, setIsCreating] = useState(false)
 
-  if (todos.length === 0) {
-    return (
-      <div className="todo-list-empty">
-        <p>No todos yet! Add one above to get started.</p>
-      </div>
-    )
+  const handleAddTask = (form) => {
+    onAdd(form.title, form.date, form.description)
+  }
+
+  const handleUpdateTask = (id, form) => {
+	onEdit(id, {
+		title: form.title,
+		date: form.date,
+		description: form.description,
+		status: form.status
+	})
+  }
+  
+  useEffect(() => {
+    if (!selectedTask) return
+
+    const updated = todos.find(t => t._id === selectedTask._id)
+    if (updated) setSelectedTask(updated)
+
+  }, [todos, selectedTask])
+
+  const closeModal = () => {
+    setSelectedTask(null)
+    setIsCreating(false)
+    setModalMode('view')
   }
 
   return (
-    <>
-      <div className="todo-list">
-        {todos.map(todo => (
-          <TodoItem 
-            key={todo._id}
-            todo={todo}
-            onEdit={onEdit}
-            onDelete={onDelete}
-            onSelect={() => setSelectedTask(todo)}
-          />
-        ))}
+    <div className="todo-list">
+      <button onClick={() => setIsCreating(true)}>➕ Add Task</button>
 
-        {selectedTask && (
-          <TaskDetailModal
-            task={selectedTask}
-            onClose={() => setSelectedTask(null)}
-          />
-        )}
-      </div>
-    </>
+      {todos.length === 0 && (
+        <div className="todo-list-empty">
+          <p>No todos yet! Add one above to get started.</p>
+        </div>
+      )}
+
+      {todos.map(todo => (
+        <TodoItem 
+          key={todo._id}
+          todo={todo}
+          onDelete={onDelete}
+          onSelect={(task, mode) => {
+            setSelectedTask(task)
+            setModalMode(mode)
+          }}
+        />
+      ))}
+
+      {(selectedTask || isCreating) && (
+        <TaskDetailModal
+          task={selectedTask}
+          mode={isCreating ? 'create' : modalMode}
+          onClose={closeModal}
+          onAddTask={handleAddTask}
+          onUpdateTask={handleUpdateTask}
+          onDeleteTask={onDelete}
+          onAddSubtask={onAddSubtask}
+          onToggleSubtask={onToggleSubtask}
+        />
+      )}
+    </div>
   )
 }
 

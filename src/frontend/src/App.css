@@ -362,3 +362,97 @@
 .app[data-theme="light"] .todo-date {
   color: #64748b;
 }
+/* Subtask List */
+.subtask-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.subtask-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  color: #ddd;
+}
+
+/* Checkbox styling */
+.subtask-item input[type="checkbox"] {
+  accent-color: #00ff88;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
+/* Completed subtask */
+.subtask-item .completed {
+  text-decoration: line-through;
+  color: #888;
+}
+
+/* Add subtask section */
+.subtask-add {
+  margin-top: 0.8rem;
+  display: flex;
+  gap: 0.4rem;
+}
+
+.subtask-add input {
+  flex: 1;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.25);
+  color: white;
+  font-size: 0.9rem;
+}
+
+.subtask-add input:focus {
+  outline: none;
+  border-color: #00d9ff;
+}
+
+.subtask-add input::placeholder {
+  color: #666;
+}
+
+/* Add button */
+button {
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  border: none;
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  color: #1a1a2e;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+textarea {
+  min-width: 100%;
+  max-width: 100%;
+  min-height: 35px;
+}
+
+input, textarea {
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(0,0,0,0.25);
+  color: white;
+  font-size: 0.9rem;
+  width: 100%;
+}
+
+input:focus, textarea:focus {
+  outline: none;
+  border-color: #00d9ff;
+}
+
+input::placeholder, textarea::placeholder {
+  color: #666;
+}
