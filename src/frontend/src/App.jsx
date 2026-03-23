@@ -220,7 +220,7 @@ function App() {
       />
 
       <header className="app-header">
-        <h1>📝 Todo App</h1>
+        <h1>📝 <span className='app-title'>TaskFlow</span></h1>
         <p className="subtitle">Manage your tasks efficiently</p>
 
         <nav className="app-nav">
