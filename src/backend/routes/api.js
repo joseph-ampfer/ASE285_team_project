@@ -4,7 +4,7 @@ import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
 import { getNextId } from '../util/util.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
-import { verifyToken, getCourses, getAssignments, getSubmission } from '../services/canvas.js';
+import { verifyToken, getCourses, getAssignments } from '../services/canvas.js';
 
 const SETTINGS_ID = 'global';
 
@@ -205,6 +205,113 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error updating settings:', error);
       res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  // GET /api/canvas/verify - verify saved Canvas token
+  router.get('/canvas/verify', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ ok: false, error: 'Canvas API token not set' });
+      }
+      const result = await verifyToken(token);
+      if (!result.ok) {
+        return res.status(502).json({ ok: false, error: result.error });
+      }
+      return res.json({ ok: true, user: result.user });
+    } catch (error) {
+      console.error('Error verifying Canvas token:', error);
+      return res.status(500).json({ ok: false, error: 'Failed to verify Canvas token' });
+    }
+  });
+
+  // POST /api/canvas/sync - import Canvas assignments and prevent duplicates by assignment id
+  router.post('/canvas/sync', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ error: 'Canvas API token not set' });
+      }
+
+      const { ok: coursesOk, courses, error: coursesError } = await getCourses(token);
+      if (!coursesOk) {
+        return res.status(502).json({ error: coursesError || 'Failed to fetch courses' });
+      }
+      if (!courses?.length) {
+        return res.json({
+          synced: true,
+          created: 0,
+          updated: 0,
+          courseCount: 0,
+          message: 'No active courses found for this account',
+        });
+      }
+
+      let created = 0;
+      let updated = 0;
+      const errors = [];
+
+      for (const course of courses) {
+        const courseId = Number(course.id);
+        if (Number.isNaN(courseId)) {
+          errors.push({ course: course.name || String(course.id), error: 'Invalid course id' });
+          continue;
+        }
+
+        const { ok: assignOk, assignments, error: assignError } = await getAssignments(token, courseId);
+        if (!assignOk) {
+          errors.push({ course: course.name || String(courseId), error: assignError });
+          continue;
+        }
+
+        for (const assignment of assignments || []) {
+          const assignmentId = Number(assignment.id);
+          if (Number.isNaN(assignmentId)) continue;
+
+          const title = assignment.name || assignment.title || 'Untitled assignment';
+          const date = assignment.due_at
+            ? String(assignment.due_at).split('T')[0]
+            : new Date().toISOString().slice(0, 10);
+
+          const existing = await Post.findOne({ canvasAssignmentId: assignmentId });
+          if (existing) {
+            existing.title = title;
+            existing.date = date;
+            existing.canvasCourseId = courseId;
+            await existing.save();
+            updated += 1;
+            continue;
+          }
+
+          const nextId = await getNextId();
+          const newPost = new Post({
+            _id: nextId,
+            title,
+            date,
+            description: '',
+            status: KanbanStatus.TODO,
+            subtasks: [],
+            canvasAssignmentId: assignmentId,
+            canvasCourseId: courseId,
+          });
+          await newPost.save();
+          created += 1;
+        }
+      }
+
+      return res.json({
+        synced: true,
+        created,
+        updated,
+        courseCount: courses.length,
+        ...(errors.length ? { errors } : {}),
+      });
+    } catch (error) {
+      console.error('Error syncing Canvas:', error);
+      return res.status(500).json({ error: 'Failed to sync Canvas' });
     }
   });
   
