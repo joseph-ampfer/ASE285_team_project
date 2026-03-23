@@ -34,7 +34,6 @@ describe('API Routes', () => {
 
       expect(res.status).toBe(201)
       expect(res.body.title).toBe('Test Post')
-      expect(res.body.completed).toBe(true)
     })
   })
 
@@ -75,6 +74,96 @@ describe('API Routes', () => {
 
       expect(res.status).toBe(200)
       expect(res.body.ok).toBe(true)
+    })
+  })
+
+  describe('Subtasks', () => {
+    let post
+
+    beforeEach(async () => {
+      post = await Post.create({
+        _id: 1,
+        title: 'Task',
+        date: '2026-03-01'
+      })
+    })
+
+    describe('POST /api/posts/:id/subtasks', () => {
+
+      it('adds a subtask to a post', async () => {
+
+        const res = await request(app)
+          .post(`/api/posts/${post._id}/subtasks`)
+          .send({ title: 'First subtask' })
+
+        expect(res.status).toBe(200)
+        expect(res.body.subtasks.length).toBe(1)
+        expect(res.body.subtasks[0].title).toBe('First subtask')
+        expect(res.body.subtasks[0].completed).toBe(false)
+
+      })
+
+      it('returns 400 if subtask title missing', async () => {
+
+        const res = await request(app)
+          .post(`/api/posts/${post._id}/subtasks`)
+          .send({})
+
+        expect(res.status).toBe(400)
+
+      })
+
+      it('returns 404 if post not found', async () => {
+
+        const res = await request(app)
+          .post('/api/posts/999/subtasks')
+          .send({ title: 'Subtask' })
+
+        expect(res.status).toBe(404)
+
+      })
+
+    })
+
+    describe('PATCH /api/posts/:id/subtasks/:subtaskId', () => {
+
+      beforeEach(async () => {
+        post.subtasks.push({
+          id: 1,
+          title: 'Test subtask',
+          completed: false
+        })
+
+        await post.save()
+      })
+
+      it('toggles subtask completion', async () => {
+
+        const res = await request(app)
+          .patch(`/api/posts/${post._id}/subtasks/1`)
+
+        expect(res.status).toBe(200)
+        expect(res.body.subtasks[0].completed).toBe(true)
+
+      })
+
+      it('returns 404 if subtask not found', async () => {
+
+        const res = await request(app)
+          .patch(`/api/posts/${post._id}/subtasks/999`)
+
+        expect(res.status).toBe(404)
+
+      })
+
+      it('returns 404 if post not found', async () => {
+
+        const res = await request(app)
+          .patch('/api/posts/999/subtasks/1')
+
+        expect(res.status).toBe(404)
+
+      })
     })
   })
 })

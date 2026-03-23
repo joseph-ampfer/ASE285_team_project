@@ -2,9 +2,12 @@ import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import './CalendarView.css'
 
-function CalendarView({ todos }) {
+function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggleSubtask }) {
     const [currentMonth, setCurrentMonth] = useState(new Date())
-    const [selectedTask, setSelectedTask] = useState(null)
+    const [selectedTaskId, setSelectedTaskId] = useState(null)
+    const [modalMode, setModalMode] = useState('view')
+
+    const selectedTask = todos.find(t => t._id === selectedTaskId)
 
     // Navigation handlers
     const prevMonth = () => {
@@ -56,6 +59,8 @@ function CalendarView({ todos }) {
             date.getFullYear() === today.getFullYear()
     }
 
+    const handleCloseModal = () => setSelectedTaskId(null)
+
     return (
         <div className="calendar-container">
             <header className="calendar-header">
@@ -81,14 +86,14 @@ function CalendarView({ todos }) {
                         >
                             <span className="day-number">{dayObj.day}</span>
                             <div className="calendar-tasks">
-                                {tasksForDay.map(task => (
+                                {tasksForDay.map(todo => (
                                     <div
-                                        key={task._id}
+                                        key={todo._id}
                                         className="task-pill"
-                                        onClick={() => setSelectedTask(task)}
-                                        title={task.title}
+                                        onClick={() => setSelectedTaskId(todo._id)}
+                                        title={todo.title}
                                     >
-                                        {task.title}
+                                        {todo.title}
                                     </div>
                                 ))}
                             </div>
@@ -97,14 +102,19 @@ function CalendarView({ todos }) {
                 })}
             </div>
 
-            {selectedTask && (
-                <TaskDetailModal
-                    task={selectedTask}
-                    onClose={() => setSelectedTask(null)}
-                />
-            )}
-        </div>
-    )
+      {selectedTask && (
+        <TaskDetailModal
+          task={selectedTask}
+          mode={modalMode}
+          onClose={handleCloseModal}
+          onUpdateTask={onUpdateTask}
+          onDeleteTask={onDeleteTask}
+          onAddSubtask={onAddSubtask}
+          onToggleSubtask={onToggleSubtask}
+        />
+      )}
+    </div>
+  )
 }
 
 export default CalendarView

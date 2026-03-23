@@ -6,7 +6,7 @@ const KanbanStatus = Object.freeze({
   DONE: 'done',
 });
 
-const postSchema = new mongoose.Schema({
+const postSchema = new mongoose.Schema({  
   _id: {
     type: Number,
     required: true,
@@ -36,8 +36,25 @@ const postSchema = new mongoose.Schema({
     type: Date,
     default: null,
   },
-  canvasAssignmentId: { type: Number, default: null },
-  canvasCourseId: { type: Number, default: null },
+  subtasks: {
+    type: [
+      {
+        id: {
+          type: Number,
+          required: true
+        },
+        title: {
+          type: String,
+          required: true
+        },
+        completed: {
+          type: Boolean,
+          default: false
+        }
+      }
+    ],
+    default: []
+  }
 });
 
 const Post = mongoose.model('Post', postSchema, 'posts');

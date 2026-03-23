@@ -44,7 +44,7 @@ export function createApiRouter() {
   // POST /api/posts - Create a new post
   router.post('/posts', async (req, res) => {
     try {
-      const { title, date, description, status } = req.body || {};
+      const { title, date, description, status, subtasks } = req.body || {};
       
       if (!title) {
         return res.status(400).json({ error: 'title is required' });
@@ -61,7 +61,7 @@ export function createApiRouter() {
         date,
         ...(description !== undefined && { description }),
         ...(status !== undefined && { status }),
-        completed: status === KanbanStatus.DONE,
+        ...(subtasks !== undefined && { subtasks }),
       });
 
       await newPost.save();
@@ -81,7 +81,7 @@ export function createApiRouter() {
         return res.status(400).json({ error: 'Invalid id' });
       }
 
-      const { title, date, description, status } = req.body || {};
+      const { title, date, description, status, subtasks } = req.body || {};
       const previous = await Post.findById(id);
       if (!previous) {
         return res.status(404).json({ error: 'Post not found' });
@@ -91,15 +91,13 @@ export function createApiRouter() {
       if (title !== undefined) update.title = title;
       if (date !== undefined) update.date = date;
       if (description !== undefined) update.description = description;
-      if (status !== undefined && previous.canvasAssignmentId == null) {
-        update.status = status;
-        update.completed = status === KanbanStatus.DONE;
-      }
+      if (status !== undefined) update.status = status;
+      if (subtasks !== undefined) update.subtasks = subtasks;
 
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         update,
-        { new: true, runValidators: true }
+        { new: true, runValidators: true } // Return the updated document
       );
 
       let gamification = null;
@@ -209,124 +207,112 @@ export function createApiRouter() {
       res.status(500).json({ error: 'Failed to update settings' });
     }
   });
-
-  // GET /api/canvas/verify - verify stored Canvas token
-  router.get('/canvas/verify', async (_req, res) => {
+  
+  // POST /api/posts/:id/subtasks - Add a subtask
+  router.post('/posts/:id/subtasks', async (req, res) => {
     try {
-      const settings = await AppSettings.findById(SETTINGS_ID);
-      const token = settings?.canvasApiToken?.trim();
-      if (!token) {
-        return res.status(400).json({ ok: false, error: 'Canvas API token not set' });
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return res.status(400).json({ error: 'Invalid id' });
       }
-      const result = await verifyToken(token);
-      if (!result.ok) {
-        return res.status(502).json({ ok: false, error: result.error });
+
+      const { title } = req.body || {};
+
+      if (!title) {
+        return res.status(400).json({ error: 'title is required' });
       }
-      res.json({ ok: true, user: result.user });
+
+      const post = await Post.findById(id);
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      const nextSubtaskId =
+        post.subtasks?.length > 0
+          ? Math.max(...post.subtasks.map(s => s.id)) + 1
+          : 1;
+
+      const newSubtask = {
+        id: nextSubtaskId,
+        title,
+        completed: false
+      };
+
+      post.subtasks = [...(post.subtasks || []), newSubtask];
+
+      await post.save();
+      
+      res.json(post);
     } catch (error) {
-      console.error('Error verifying Canvas token:', error);
-      res.status(500).json({ ok: false, error: 'Failed to verify' });
+      console.error('Error adding subtask:', error);
+      res.status(500).json({ error: 'Failed to add subtask' });
     }
   });
 
-  // POST /api/canvas/sync
-  router.post('/canvas/sync', async (req, res) => {
+  // PATCH /api/posts/:postId/subtasks/:subtaskId
+  router.patch('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
     try {
-      const settings = await AppSettings.findById(SETTINGS_ID);
-      const token = settings?.canvasApiToken?.trim();
-      if (!token) {
-        return res.status(400).json({ error: 'Canvas API token not set' });
+      const postId = parseInt(req.params.postId, 10);
+      const subtaskId = parseInt(req.params.subtaskId, 10);
+
+      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
+        return res.status(400).json({ error: 'Invalid id' });
       }
 
-      const { ok: coursesOk, courses, error: coursesError } = await getCourses(token);
-      if (!coursesOk) {
-        return res.status(502).json({
-          error: coursesError || 'Canvas API error',
-          details: coursesError,
-        });
-      }
-      if (!courses?.length) {
-        return res.status(200).json({
-          synced: true,
-          created: 0,
-          updated: 0,
-          courseCount: 0,
-          message: 'No courses found for this account',
-        });
+      const post = await Post.findById(postId);
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
       }
 
-      let created = 0;
-      let updated = 0;
-      const errors = [];
-      const courseId = (c) => (c.id != null ? Number(c.id) : c.id);
-      const courseName = (c) => c.name || c.course_code || `Course ${c.id}`;
+      const subtask = post.subtasks?.find(s => s.id === subtaskId);
 
-      for (const course of courses) {
-        const cid = courseId(course);
-        if (cid == null || Number.isNaN(cid)) {
-          errors.push({ course: courseName(course), error: 'Invalid course id' });
-          continue;
-        }
-        const { ok: assignOk, assignments, error: assignError } = await getAssignments(
-          token,
-          cid
-        );
-        if (!assignOk) {
-          console.warn('[Canvas sync] Assignments failed for course', courseName(course), assignError);
-          errors.push({ course: courseName(course), error: assignError });
-          continue;
-        }
-        if (!assignments?.length) continue;
-
-        for (const a of assignments) {
-          const aid = a.id != null ? Number(a.id) : a.id;
-          const title = a.name || a.title || 'Assignment';
-          const dateStr = a.due_at
-            ? a.due_at.split('T')[0]
-            : new Date().toISOString().slice(0, 10);
-
-          const existing = await Post.findOne({ canvasAssignmentId: aid });
-          if (existing) {
-            existing.title = title;
-            existing.date = dateStr;
-            const subResult = await getSubmission(token, cid, aid);
-            if (subResult.ok && subResult.submitted) {
-              existing.status = KanbanStatus.DONE;
-              existing.completed = true;
-              if (!existing.completedAt) existing.completedAt = new Date();
-            }
-            await existing.save();
-            updated += 1;
-          } else {
-            const nextId = await getNextId();
-            const newPost = new Post({
-              _id: nextId,
-              title,
-              date: dateStr,
-              description: '',
-              status: KanbanStatus.TODO,
-              completed: false,
-              completedAt: null,
-              canvasAssignmentId: aid,
-              canvasCourseId: cid,
-            });
-            await newPost.save();
-            created += 1;
-          }
-        }
+      if (!subtask) {
+        return res.status(404).json({ error: 'Subtask not found' });
       }
 
-      const payload = {
-        synced: true,
-        created,
-        updated,
-        courseCount: courses.length,
-      };
-      if (errors.length) payload.errors = errors;
-      res.json(payload);
+      subtask.completed = !subtask.completed;
+
+      await post.save();
+
+      res.json(post);
     } catch (error) {
-      console.error('Error syncing Canvas:', error);
-      res.status(500).json({ error: 'Failed to sync Canvas' });
+      console.error('Error updating subtask:', error);
+      res.status(500).json({ error: 'Failed to update subtask' });
+    }
+  });
+
+  // DELETE /api/posts/:postId/subtasks/:subtaskId
+  router.delete('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
+    try {
+      const postId = parseInt(req.params.postId, 10);
+      const subtaskId = parseInt(req.params.subtaskId, 10);
+
+      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
+        return res.status(400).json({ error: 'Invalid id' });
+      }
+
+      const post = await Post.findById(postId);
+
+      if (!post) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
+      const subtaskIndex = post.subtasks?.findIndex(s => s.id === subtaskId);
+
+      if (subtaskIndex === -1 || subtaskIndex === undefined) {
+        return res.status(404).json({ error: 'Subtask not found' });
+      }
+
+      post.subtasks.splice(subtaskIndex, 1);
+
+      await post.save();
+
+      res.json({ ok: true, deletedSubtaskId: subtaskId });
+    } catch (error) {
+      console.error('Error deleting subtask:', error);
+      res.status(500).json({ error: 'Failed to delete subtask' });
     }
   });
 
