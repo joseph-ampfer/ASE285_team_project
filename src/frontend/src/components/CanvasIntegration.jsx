@@ -14,8 +14,6 @@ function CanvasIntegration({ onSyncComplete }) {
   const [token, setToken] = useState('')
   const [savedToken, setSavedToken] = useState('')
   const [saving, setSaving] = useState(false)
-  const [verifying, setVerifying] = useState(false)
-  const [verifyMessage, setVerifyMessage] = useState(null)
   const [syncing, setSyncing] = useState(false)
   const [syncMessage, setSyncMessage] = useState(null)
   const [message, setMessage] = useState(null)
@@ -50,12 +48,20 @@ function CanvasIntegration({ onSyncComplete }) {
   const handleSave = async () => {
     setSaving(true)
     setMessage(null)
-    setVerifyMessage(null)
     setSyncMessage(null)
     try {
       await axios.put('/api/settings', { canvasApiToken: token })
       setSavedToken(token)
       setMessage('Saved')
+      try {
+        const res = await axios.get('/api/canvas/verify')
+        const name = res.data?.user?.name || res.data?.user?.short_name
+        setMessage(name ? `Saved · Connected as ${name}` : 'Saved · Connection successful')
+      } catch (err) {
+        const msg =
+          err.response?.data?.error || err.message || 'Verification failed'
+        setMessage(`Saved · ${msg}`)
+      }
     } catch (err) {
       console.error('Error saving Canvas token:', err)
       setMessage('Save failed')
@@ -64,26 +70,10 @@ function CanvasIntegration({ onSyncComplete }) {
     }
   }
 
-  const handleVerify = async () => {
-    setVerifying(true)
-    setVerifyMessage(null)
-    try {
-      const res = await axios.get('/api/canvas/verify')
-      const name = res.data?.user?.name || res.data?.user?.short_name
-      setVerifyMessage(name ? `Connected as ${name}` : 'Connection successful')
-    } catch (err) {
-      const msg = err.response?.data?.error || err.message || 'Verification failed'
-      setVerifyMessage(msg)
-    } finally {
-      setVerifying(false)
-    }
-  }
-
   const handleSyncNow = async () => {
     setSyncing(true)
     setSyncMessage(null)
     setMessage(null)
-    setVerifyMessage(null)
     try {
       const res = await axios.post('/api/canvas/sync')
       const {
@@ -162,7 +152,7 @@ function CanvasIntegration({ onSyncComplete }) {
               onClick={handleSave}
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Save'}
+              {saving ? 'Saving...' : 'Verify'}
             </button>
           </div>
           {message && (
@@ -173,14 +163,6 @@ function CanvasIntegration({ onSyncComplete }) {
           <div className="canvas-integration-actions">
             <button
               type="button"
-              className="canvas-integration-verify-btn"
-              onClick={handleVerify}
-              disabled={verifying || !savedToken?.trim()}
-            >
-              {verifying ? 'Verifying...' : 'Verify connection'}
-            </button>
-            <button
-              type="button"
               className="canvas-integration-sync-btn"
               onClick={handleSyncNow}
               disabled={syncing || !savedToken?.trim()}
@@ -188,11 +170,6 @@ function CanvasIntegration({ onSyncComplete }) {
               {syncing ? 'Syncing...' : 'Import from Canvas'}
             </button>
           </div>
-          {verifyMessage && (
-            <p className="canvas-integration-message canvas-integration-verify-msg" role="status">
-              {verifyMessage}
-            </p>
-          )}
           {syncMessage && (
             <p className="canvas-integration-message canvas-integration-sync-msg" role="status">
               {syncMessage}
