@@ -6,7 +6,10 @@ import { requireAuth } from '../util/auth.js';
 import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
-import { verifyToken, getCourses, getAssignments } from '../services/canvas.js';
+import {
+  verifyToken,
+  getFutureIncompletePlannerAssignments,
+} from '../services/canvas.js';
 
 const SETTINGS_ID = 'global';
 
@@ -298,7 +301,7 @@ export function createApiRouter() {
     }
   });
 
-  // POST /api/canvas/sync - import Canvas assignments and prevent duplicates by assignment id
+  // POST /api/canvas/sync — planner: future due + incomplete; skip existing canvasAssignmentId
   router.post('/canvas/sync', async (_req, res) => {
     try {
       const settings = await AppSettings.findById(SETTINGS_ID);
@@ -307,79 +310,73 @@ export function createApiRouter() {
         return res.status(400).json({ error: 'Canvas API token not set' });
       }
 
-      const { ok: coursesOk, courses, error: coursesError } = await getCourses(token);
-      if (!coursesOk) {
-        return res.status(502).json({ error: coursesError || 'Failed to fetch courses' });
-      }
-      if (!courses?.length) {
-        return res.json({
-          synced: true,
-          created: 0,
-          updated: 0,
-          courseCount: 0,
-          message: 'No active courses found for this account',
-        });
+      const plannerResult = await getFutureIncompletePlannerAssignments(token);
+      if (!plannerResult.ok) {
+        return res
+          .status(502)
+          .json({ error: plannerResult.error || 'Failed' });
       }
 
+      const assignments = plannerResult.assignments || [];
       let created = 0;
-      let updated = 0;
-      const errors = [];
+      let skipped = 0;
+      const courseIds = new Set();
 
-      for (const course of courses) {
-        const courseId = Number(course.id);
-        if (Number.isNaN(courseId)) {
-          errors.push({ course: course.name || String(course.id), error: 'Invalid course id' });
+      for (const assignment of assignments) {
+        const assignmentId = Number(assignment.id);
+        if (Number.isNaN(assignmentId)) continue;
+
+        const cidRaw = assignment.course_id;
+        const courseId =
+          cidRaw != null && !Number.isNaN(Number(cidRaw)) ? Number(cidRaw) : null;
+        if (courseId != null) courseIds.add(courseId);
+
+        const title =
+          assignment.name ||
+          assignment.title ||
+          `Canvas assignment ${assignmentId}`;
+        const date = assignment.due_at
+          ? String(assignment.due_at).split('T')[0]
+          : new Date().toISOString().slice(0, 10);
+        const description =
+          typeof assignment.course_name === 'string' ? assignment.course_name.trim() : '';
+
+        const existing = await Post.findOne({ canvasAssignmentId: assignmentId });
+        if (existing) {
+          skipped += 1;
           continue;
         }
 
-        const { ok: assignOk, assignments, error: assignError } = await getAssignments(token, courseId);
-        if (!assignOk) {
-          errors.push({ course: course.name || String(courseId), error: assignError });
-          continue;
-        }
-
-        for (const assignment of assignments || []) {
-          const assignmentId = Number(assignment.id);
-          if (Number.isNaN(assignmentId)) continue;
-
-          const title = assignment.name || assignment.title || 'Untitled assignment';
-          const date = assignment.due_at
-            ? String(assignment.due_at).split('T')[0]
-            : new Date().toISOString().slice(0, 10);
-
-          const existing = await Post.findOne({ canvasAssignmentId: assignmentId });
-          if (existing) {
-            existing.title = title;
-            existing.date = date;
-            existing.canvasCourseId = courseId;
-            await existing.save();
-            updated += 1;
-            continue;
-          }
-
-          const nextId = await getNextId();
-          const newPost = new Post({
-            _id: nextId,
-            title,
-            date,
-            description: '',
-            status: KanbanStatus.TODO,
-            subtasks: [],
-            canvasAssignmentId: assignmentId,
-            canvasCourseId: courseId,
-          });
-          await newPost.save();
-          created += 1;
-        }
+        const nextId = await getNextId();
+        const newPost = new Post({
+          _id: nextId,
+          title,
+          date,
+          description,
+          status: KanbanStatus.TODO,
+          subtasks: [],
+          canvasAssignmentId: assignmentId,
+          canvasCourseId: courseId,
+        });
+        await newPost.save();
+        created += 1;
       }
 
-      return res.json({
+      const payload = {
         synced: true,
+        source: 'planner',
         created,
-        updated,
-        courseCount: courses.length,
-        ...(errors.length ? { errors } : {}),
-      });
+        skipped,
+        assignmentCount: assignments.length,
+        courseCount: courseIds.size,
+      };
+      if (assignments.length === 0) {
+        payload.message =
+          'No matching assignments in the planner window (future due, not completed).';
+      } else if (created === 0 && skipped > 0) {
+        payload.message = 'All matching Canvas assignments are already in your list.';
+      }
+      return res.json(payload);
     } catch (error) {
       console.error('Error syncing Canvas:', error);
       return res.status(500).json({ error: 'Failed to sync Canvas' });

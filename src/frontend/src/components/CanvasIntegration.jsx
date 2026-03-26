@@ -86,14 +86,21 @@ function CanvasIntegration({ onSyncComplete }) {
     setVerifyMessage(null)
     try {
       const res = await axios.post('/api/canvas/sync')
-      const { created = 0, updated = 0, courseCount, errors = [], message: apiMsg } = res.data || {}
-      let msg = apiMsg || `Synced: ${created} created, ${updated} updated`
-      if (!apiMsg) {
-        if (courseCount != null) msg += ` (${courseCount} courses)`
-        if (errors.length) {
-          const errText = errors.map((e) => `${e.course}: ${e.error}`).join('; ')
-          msg += `. Issues: ${errText}`
-        }
+      const {
+        created = 0,
+        skipped = 0,
+        assignmentCount,
+        courseCount,
+        message: apiMsg,
+      } = res.data || {}
+      const n = assignmentCount
+      let msg =
+        apiMsg ||
+        (n != null
+          ? `Imported ${created} new (${skipped} already in list, ${n} future/incomplete in Canvas planner)`
+          : `Imported ${created} new${skipped ? `, ${skipped} skipped (already in list)` : ''}`)
+      if (!apiMsg && courseCount != null) {
+        msg += ` · ${courseCount} course(s)`
       }
       setSyncMessage(msg)
       if (typeof onSyncComplete === 'function') onSyncComplete()

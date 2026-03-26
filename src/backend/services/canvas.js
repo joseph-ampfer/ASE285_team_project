@@ -1,8 +1,11 @@
 
-const CANVAS_API_BASE =
-  process.env.CANVAS_BASE_URL ||
-  process.env.CANVAS_API_BASE_URL ||
-  'https://canvas.instructure.com/api/v1';
+export function getCanvasApiBase() {
+  return (
+    process.env.CANVAS_BASE_URL ||
+    process.env.CANVAS_API_BASE_URL ||
+    'https://canvas.instructure.com/api/v1'
+  );
+}
 
 function headers(token) {
   return {
@@ -19,7 +22,7 @@ export async function verifyToken(token) {
     return { ok: false, error: 'No token' };
   }
   try {
-    const res = await fetch(`${CANVAS_API_BASE}/users/self`, {
+    const res = await fetch(`${getCanvasApiBase()}/users/self`, {
       headers: headers(token),
     });
     if (!res.ok) {
@@ -33,14 +36,14 @@ export async function verifyToken(token) {
 }
 
 /**
- * List courses: GET /courses — only current (available), not concluded.
+ * List courses: GET /courses — only current (available)
  */
-export async function getCourses(token) {
+async function getCourses(token) {
   if (!token || !String(token).trim()) {
     return { ok: false, error: 'No token' };
   }
   try {
-    const url = `${CANVAS_API_BASE}/courses?per_page=50&state[]=available`;
+    const url = `${getCanvasApiBase()}/courses?per_page=50&state[]=available`;
     const res = await fetch(url, { headers: headers(token) });
     if (!res.ok) {
       return { ok: false, error: `Canvas API ${res.status}` };
@@ -53,66 +56,156 @@ export async function getCourses(token) {
   }
 }
 
-/**
- * List assignments: use assignment_groups (student-friendly); fallback to /assignments if 403.
- */
-export async function getAssignments(token, courseId) {
-  if (!token || !String(token).trim()) {
-    return { ok: false, error: 'No token' };
+function parseNextPageUrl(linkHeader) {
+  if (!linkHeader || typeof linkHeader !== 'string') return null;
+  for (const part of linkHeader.split(',')) {
+    const m = /<([^>]+)>;\s*rel="next"/.exec(part.trim());
+    if (m) return m[1].trim();
   }
-  const groupsUrl = `${CANVAS_API_BASE}/courses/${courseId}/assignment_groups?per_page=50&include[]=assignments`;
+  return null;
+}
+
+function resolveCanvasRequestUrl(nextUrl) {
+  if (!nextUrl) return null;
+  if (/^https?:\/\//i.test(nextUrl)) return nextUrl;
   try {
-    const res = await fetch(groupsUrl, { headers: headers(token) });
-    if (res.ok) {
-      const groups = await res.json();
-      const assignments = [];
-      if (Array.isArray(groups)) {
-        for (const g of groups) {
-          if (Array.isArray(g.assignments)) {
-            for (const a of g.assignments) {
-              assignments.push({ ...a, course_id: a.course_id ?? courseId });
-            }
-          }
-        }
-      }
-      return { ok: true, assignments };
-    }
-    if (res.status === 403) {
-      const directRes = await fetch(
-        `${CANVAS_API_BASE}/courses/${courseId}/assignments?per_page=50`,
-        { headers: headers(token) }
-      );
-      if (directRes.ok) {
-        const data = await directRes.json();
-        const list = Array.isArray(data) ? data : [];
-        return { ok: true, assignments: list };
-      }
-      return { ok: false, error: `Canvas API ${directRes.status}` };
-    }
-    return { ok: false, error: `Canvas API ${res.status}` };
-  } catch (err) {
-    return { ok: false, error: err.message || 'Network error' };
+    const u = new URL(getCanvasApiBase());
+    if (nextUrl.startsWith('/')) return `${u.origin}${nextUrl}`;
+  } catch {
   }
+  return nextUrl;
+}
+
+/** Earliest future due */
+function assignmentEffectiveDueAt(plannable, now) {
+  const direct = plannable.due_at;
+  if (direct && new Date(direct) > now) return direct;
+  const dates = plannable.all_dates;
+  if (!Array.isArray(dates)) return null;
+  let best = null;
+  for (const row of dates) {
+    const d = row?.due_at;
+    if (!d || new Date(d) <= now) continue;
+    if (!best || new Date(d) < new Date(best)) best = d;
+  }
+  return best;
 }
 
 /**
- * Get submission for one assignment (Option A: completion from Canvas only).
+ * only future-dated, not-yet-completed assignment.
+ * Skips no due date, past due, locked, unpublished, graded submissions.
  */
-export async function getSubmission(token, courseId, assignmentId) {
+function isFutureIncompletePlannable(plannable, now) {
+  if (!plannable?.id) return false;
+  if (plannable.locked_for_user === true) return false;
+  if (plannable.workflow_state === 'unpublished') return false;
+  const dueAt = assignmentEffectiveDueAt(plannable, now);
+  if (!dueAt) return false;
+  const sub = plannable.submission;
+  if (sub && typeof sub === 'object') {
+    const sw = String(sub.workflow_state || '');
+    if (sw === 'graded' || sw === 'complete') return false;
+  }
+  return true;
+}
+
+const PLANNER_MAX_PAGES = 60;
+
+
+export async function getFutureIncompletePlannerAssignments(token) {
   if (!token || !String(token).trim()) {
     return { ok: false, error: 'No token' };
   }
   try {
-    const res = await fetch(
-      `${CANVAS_API_BASE}/courses/${courseId}/assignments/${assignmentId}/submissions/self`,
-      { headers: headers(token) }
+    const now = new Date();
+    const start = new Date(now);
+    start.setDate(start.getDate() - 1);
+    const rangeDays = Math.max(
+      30,
+      Number(process.env.CANVAS_PLANNER_RANGE_DAYS || 730)
     );
-    if (!res.ok) {
-      return { ok: false, error: `Canvas API ${res.status}` };
+    const end = new Date(now);
+    end.setDate(end.getDate() + rangeDays);
+
+    const sd = start.toISOString().slice(0, 10);
+    const ed = end.toISOString().slice(0, 10);
+
+    const params = new URLSearchParams({
+      start_date: sd,
+      end_date: ed,
+      per_page: '100',
+    });
+    let nextUrl = `${getCanvasApiBase()}/planner/items?${params.toString()}`;
+    const items = [];
+    let page = 0;
+
+    while (nextUrl && page < PLANNER_MAX_PAGES) {
+      page += 1;
+      const res = await fetch(nextUrl, { headers: headers(token) });
+      if (!res.ok) {
+        return { ok: false, error: `Canvas API ${res.status}` };
+      }
+      const data = await res.json();
+      const chunk = Array.isArray(data) ? data : [];
+      items.push(...chunk);
+      nextUrl = resolveCanvasRequestUrl(parseNextPageUrl(res.headers.get('link')));
     }
-    const sub = await res.json();
-    const submitted = ['submitted', 'graded'].includes(sub.workflow_state);
-    return { ok: true, submitted };
+
+    const byId = new Map();
+    for (const item of items) {
+      const pt = String(item.plannable_type || '').toLowerCase();
+      if (pt !== 'assignment') continue;
+      const plannable = item.plannable || {};
+      if (!isFutureIncompletePlannable(plannable, now)) continue;
+      const assignmentId = Number(plannable.id ?? item.plannable_id);
+      if (Number.isNaN(assignmentId)) continue;
+      const courseId = Number(item.course_id);
+      const dueAt = assignmentEffectiveDueAt(plannable, now);
+      const courseName =
+        (typeof item.context_name === 'string' && item.context_name.trim()) ||
+        (typeof plannable.context_name === 'string' && plannable.context_name.trim()) ||
+        '';
+      if (!byId.has(assignmentId)) {
+        byId.set(assignmentId, {
+          id: assignmentId,
+          course_id: Number.isNaN(courseId) ? null : courseId,
+          course_name: courseName,
+          name:
+            plannable.name ||
+            plannable.title ||
+            `Canvas assignment ${assignmentId}`,
+          due_at: dueAt || null,
+        });
+      }
+    }
+
+    const assignments = [...byId.values()];
+
+    const needsCourseName = assignments.some(
+      (a) => (!a.course_name || !String(a.course_name).trim()) && a.course_id != null
+    );
+    if (needsCourseName) {
+      const courseRes = await getCourses(token);
+      if (courseRes.ok && Array.isArray(courseRes.courses)) {
+        const idToName = new Map(
+          courseRes.courses.map((c) => [
+            Number(c.id),
+            String(c.name || c.course_code || '').trim(),
+          ])
+        );
+        for (const a of assignments) {
+          if ((!a.course_name || !String(a.course_name).trim()) && a.course_id != null) {
+            const n = idToName.get(Number(a.course_id));
+            if (n) a.course_name = n;
+          }
+        }
+      }
+    }
+
+    return {
+      ok: true,
+      assignments,
+    };
   } catch (err) {
     return { ok: false, error: err.message || 'Network error' };
   }
