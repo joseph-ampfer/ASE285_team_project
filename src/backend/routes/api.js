@@ -1,8 +1,6 @@
-// routes/api.js - REST API endpoints using Mongoose
 import express from 'express';
 import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
-import { getNextId } from '../util/util.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
 
 const SETTINGS_ID = 'global';
@@ -13,7 +11,10 @@ export function createApiRouter() {
   // GET /api/posts - List all posts
   router.get('/posts', async (req, res) => {
     try {
-      const posts = await Post.find({}).sort({ _id: 1 });
+      const posts = await Post
+        .find({ owner: req.user.id })
+        .sort({ createdAt: 1 })
+
       res.json(posts);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -24,12 +25,13 @@ export function createApiRouter() {
   // GET /api/posts/:id - Get a single post
   router.get('/posts/:id', async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
+      const { id } = req.params;
 
-      const post = await Post.findById(id);
+      const post = await Post.findOne({
+        _id: id,
+        owner: req.user.id
+      });
+
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -51,11 +53,9 @@ export function createApiRouter() {
       if (!date) {
         return res.status(400).json({ error: 'date is required' });
       }
-
-      const nextId = await getNextId();
       
       const newPost = new Post({
-        _id: nextId,
+        owner: req.user.id,
         title,
         date,
         ...(description !== undefined && { description }),
@@ -75,11 +75,7 @@ export function createApiRouter() {
   // PUT /api/posts/:id - Update a post
   router.put('/posts/:id', async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
+      const { id } = req.params;
       const { title, date, description, status, subtasks } = req.body || {};
       const update = {};
       if (title !== undefined) update.title = title;
@@ -88,16 +84,20 @@ export function createApiRouter() {
       if (status !== undefined) update.status = status;
       if (subtasks !== undefined) update.subtasks = subtasks;
 
-      const previous = await Post.findById(id);
-      const updatedPost = await Post.findByIdAndUpdate(
-        id,
-        update,
-        { new: true, runValidators: true } // Return the updated document
-      );
+      const previous = await Post.findOne({
+        _id: id,
+        owner: req.user.id
+      });
 
-      if (!updatedPost) {
+      if (!previous) {
         return res.status(404).json({ error: 'Post not found' });
       }
+
+      const updatedPost = await Post.findOneAndUpdate(
+        { _id: id, owner: req.user.id },
+        update,
+        { new: true, runValidators: true }
+      );
 
       let gamification = null;
       const isNowDone = updatedPost.status === KanbanStatus.DONE;
@@ -124,13 +124,13 @@ export function createApiRouter() {
   // DELETE /api/posts/:id - Delete a post
   router.delete('/posts/:id', async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
+      const { id } = req.params;
 
-      const deletedPost = await Post.findByIdAndDelete(id);
-      
+      const deletedPost = await Post.findOneAndDelete({
+        _id: id,
+        owner: req.user.id
+      });
+
       if (!deletedPost) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -210,38 +210,26 @@ export function createApiRouter() {
   // POST /api/posts/:id/subtasks - Add a subtask
   router.post('/posts/:id/subtasks', async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
+      const { id } = req.params;
       const { title } = req.body || {};
 
       if (!title) {
         return res.status(400).json({ error: 'title is required' });
       }
 
-      const post = await Post.findById(id);
+      const post = await Post.findOne({
+        _id: id,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const nextSubtaskId =
-        post.subtasks?.length > 0
-          ? Math.max(...post.subtasks.map(s => s.id)) + 1
-          : 1;
-
-      const newSubtask = {
-        id: nextSubtaskId,
-        title,
-        completed: false
-      };
-
-      post.subtasks = [...(post.subtasks || []), newSubtask];
+      post.subtasks.push({ title, completed: false });
 
       await post.save();
-      
+
       res.json(post);
     } catch (error) {
       console.error('Error adding subtask:', error);
@@ -252,20 +240,18 @@ export function createApiRouter() {
   // PATCH /api/posts/:postId/subtasks/:subtaskId
   router.patch('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const subtask = post.subtasks?.find(s => s.id === subtaskId);
+      const subtask = post.subtasks.id(subtaskId);
 
       if (!subtask) {
         return res.status(404).json({ error: 'Subtask not found' });
@@ -285,26 +271,24 @@ export function createApiRouter() {
   // DELETE /api/posts/:postId/subtasks/:subtaskId
   router.delete('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const subtaskIndex = post.subtasks?.findIndex(s => s.id === subtaskId);
+      const subtask = post.subtasks.id(subtaskId);
 
-      if (subtaskIndex === -1 || subtaskIndex === undefined) {
+      if (!subtask) {
         return res.status(404).json({ error: 'Subtask not found' });
       }
 
-      post.subtasks.splice(subtaskIndex, 1);
+      subtask.remove();
 
       await post.save();
 

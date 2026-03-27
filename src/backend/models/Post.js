@@ -7,9 +7,10 @@ const KanbanStatus = Object.freeze({
 });
 
 const postSchema = new mongoose.Schema({  
-  _id: {
-    type: Number,
-    required: true,
+  owner: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
   },
   title: {
     type: String,
@@ -39,10 +40,6 @@ const postSchema = new mongoose.Schema({
   subtasks: {
     type: [
       {
-        id: {
-          type: Number,
-          required: true
-        },
         title: {
           type: String,
           required: true
