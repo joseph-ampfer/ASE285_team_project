@@ -1,4 +1,4 @@
-# ASE285 Team Project - Todo App
+# ASE285 Team Project - TaskFlow
 
 A full-stack Todo application with a React frontend and Express/Mongoose backend.
 

@@ -4,7 +4,7 @@ import './CanvasIntegration.css'
 
 const CANVAS_TOKEN_PLACEHOLDER = 'Canvas API Token'
 const HELP_TOOLTIP_TEXT =
-  'Connect Canvas to automatically add your Canvas assignments to the Todo App. Click this button to learn how to get a Canvas API token.'
+  'Connect Canvas to automatically add your Canvas assignments to TaskFlow. Click this button to learn how to get a Canvas API token.'
 const HELP_LINK_URL =
   'https://community.instructure.com/en/kb/articles/662901-how-do-i-manage-api-access-tokens-in-my-user-account'
 
