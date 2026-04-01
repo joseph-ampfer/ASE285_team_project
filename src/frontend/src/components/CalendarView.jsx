@@ -4,6 +4,14 @@ import { isCanvasTask } from '../util/canvasTask'
 import { taskStatusModifierClass } from '../util/taskStatus'
 import './CalendarView.css'
 
+const CALENDAR_PILL_TITLE_MAX = 14
+
+function truncateCalendarTitle(text, maxLen = CALENDAR_PILL_TITLE_MAX) {
+  const s = text == null ? '' : String(text)
+  if (s.length <= maxLen) return s
+  return `${s.slice(0, maxLen)}···`
+}
+
 function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggleSubtask }) {
     const [currentMonth, setCurrentMonth] = useState(new Date())
     const [selectedTaskId, setSelectedTaskId] = useState(null)
@@ -98,7 +106,7 @@ function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggl
                                         onClick={() => setSelectedTaskId(todo._id)}
                                         title={todo.title}
                                     >
-                                        {todo.title}
+                                        {truncateCalendarTitle(todo.title)}
                                         {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
                                     </div>
                                     );
