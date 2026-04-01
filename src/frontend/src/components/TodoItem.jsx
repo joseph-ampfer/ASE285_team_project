@@ -1,3 +1,5 @@
+import { isCanvasTask } from '../util/canvasTask'
+
 function TodoItem({ todo, onDelete, onSelect }) {
   const handleDelete = () => {
     if (window.confirm(`Delete "${todo.title}"?`)) {
@@ -5,10 +7,18 @@ function TodoItem({ todo, onDelete, onSelect }) {
     }
   }
 
+  const fromCanvas = isCanvasTask(todo)
+
   return (
-    <div className="todo-item" onClick={() => onSelect(todo, 'view')}>
+    <div
+      className={`todo-item${fromCanvas ? ' canvas-task' : ''}`}
+      onClick={() => onSelect(todo, 'view')}
+    >
       <div className="todo-content">
-        <div className="todo-title">{todo.title}</div>
+        <div className="todo-title">
+          {todo.title}
+          {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
+        </div>
         <div className="todo-date">📅 {todo.date}</div>
       </div>
       <div className="todo-actions">

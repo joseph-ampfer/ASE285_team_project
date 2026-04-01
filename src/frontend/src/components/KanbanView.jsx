@@ -2,6 +2,7 @@ import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import './KanbanView.css'
 import { KanbanStatus } from '../../../backend/models/Post'
+import { isCanvasTask } from '../util/canvasTask'
 
 const COLUMNS = [
     { id: KanbanStatus.TODO, title: 'Todo', emoji: '📥' },
@@ -112,10 +113,12 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                             )}
 
                             <div className="kanban-tasks">
-                                {columnTasks.map((todo, index) => (
+                                {columnTasks.map((todo, index) => {
+                                    const fromCanvas = isCanvasTask(todo)
+                                    return (
                                     <div
                                         key={todo._id}
-                                        className="kanban-item"
+                                        className={`kanban-item${fromCanvas ? ' canvas-task' : ''}`}
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, todo._id)}
                                         onDragEnd={handleDragEnd}
@@ -124,12 +127,16 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                                         {column.id === 'in-progress' && index === 0 && (
                                             <span className="focus-badge">Focus</span>
                                         )}
-                                        <div className="kanban-item-title">{todo.title}</div>
+                                        <div className="kanban-item-title">
+                                            {todo.title}
+                                            {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
+                                        </div>
                                         <div className="kanban-item-footer">
                                             <span>📅 {todo.date}</span>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )

@@ -7,6 +7,7 @@ import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
 import './App.css'
+import './styles/canvasTask.css'
 
 // API base URL - uses Vite proxy in development
 const API_URL = '/api/posts'

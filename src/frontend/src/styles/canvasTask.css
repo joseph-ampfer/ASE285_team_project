@@ -1,0 +1,48 @@
+/* style change of Canvas-imported tasks */
+
+.canvas-task-suffix {
+  color: #e4c52b;
+  font-weight: 600;
+  margin-left: 0.35rem;
+  font-size: 0.88em;
+  white-space: nowrap;
+}
+
+.todo-item.canvas-task {
+  background: rgba(255, 214, 0, 0.1);
+  border-color: rgba(255, 214, 0, 0.25);
+}
+
+.app[data-theme="light"] .todo-item.canvas-task {
+  background: rgba(255, 214, 0, 0.12);
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.kanban-item.canvas-task {
+  background: rgba(255, 214, 0, 0.1);
+  border-color: rgba(255, 214, 0, 0.25);
+}
+
+.kanban-item.canvas-task:hover {
+  background: rgba(255, 214, 0, 0.13);
+}
+
+.app[data-theme="light"] .kanban-item.canvas-task {
+  background: rgba(255, 214, 0, 0.12);
+  border-color: rgba(234, 179, 8, 0.3);
+}
+
+.app[data-theme="light"] .kanban-item.canvas-task:hover {
+  background: rgba(255, 214, 0, 0.15);
+}
+
+/* Flat yellow pill instead of the default cyan–green gradient */
+.task-pill.canvas-task {
+  background: rgba(255, 214, 0, 0.42);
+  color: #1a1a2e;
+}
+
+.task-pill.canvas-task .canvas-task-suffix {
+  font-size: 0.72em;
+  margin-left: 0.2rem;
+}
