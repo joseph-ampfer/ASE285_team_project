@@ -1,4 +1,5 @@
 import { isCanvasTask } from '../util/canvasTask'
+import { taskStatusModifierClass } from '../util/taskStatus'
 
 function TodoItem({ todo, onDelete, onSelect }) {
   const handleDelete = () => {
@@ -8,10 +9,11 @@ function TodoItem({ todo, onDelete, onSelect }) {
   }
 
   const fromCanvas = isCanvasTask(todo)
+  const statusMod = taskStatusModifierClass(todo.status)
 
   return (
     <div
-      className={`todo-item${fromCanvas ? ' canvas-task' : ''}`}
+      className={`todo-item${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}`}
       onClick={() => onSelect(todo, 'view')}
     >
       <div className="todo-content">

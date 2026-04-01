@@ -1,0 +1,132 @@
+/* Done list (default / dark theme — light overrides below) */
+.todo-item.task--done,
+.todo-item.task--done.canvas-task {
+  background: rgba(38, 38, 44, 0.78);
+  border: 1px solid rgba(68, 68, 76, 0.55);
+}
+
+.todo-item.task--done .todo-title {
+  text-decoration: line-through;
+  color: #56565f;
+}
+
+.todo-item.task--done .canvas-task-suffix {
+  color: #56565f;
+}
+
+.todo-item.task--done .todo-date {
+  color: #45454e;
+}
+
+.todo-item.task--done:hover {
+  border-color: rgba(82, 82, 90, 0.65);
+}
+
+.kanban-item.task--done,
+.kanban-item.task--done.canvas-task {
+  background: rgba(100, 100, 105, 0.2);
+  border: 1px solid rgba(120, 120, 128, 0.45);
+}
+
+.kanban-item.task--done:hover,
+.kanban-item.task--done.canvas-task:hover {
+  background: rgba(100, 100, 105, 0.24);
+  border-color: rgba(120, 120, 128, 0.5);
+}
+
+.kanban-item.task--done .kanban-item-title {
+  text-decoration: line-through;
+  color: #8f8f96;
+}
+
+.kanban-item.task--done .canvas-task-suffix {
+  color: #8f8f96;
+}
+
+.kanban-item.task--done .kanban-item-footer {
+  color: #6f6f78;
+}
+
+.task-pill.task--done,
+.task-pill.task--done.canvas-task {
+  background: rgba(105, 105, 115, 0.45);
+  color: #4a4a55;
+  border: 1px solid rgba(95, 95, 105, 0.5);
+  text-decoration: line-through;
+}
+
+.task-pill.task--done .canvas-task-suffix {
+  color: inherit;
+}
+
+/* In progress: mint border(thicker) */
+.todo-item.task--in-progress {
+  border: 2px solid rgba(0, 217, 255, 0.55);
+}
+
+.todo-item.task--in-progress:hover {
+  border-color: rgba(0, 217, 255, 0.75);
+}
+
+.kanban-item.task--in-progress {
+  border: 2px solid rgba(0, 217, 255, 0.55);
+}
+
+.kanban-item.task--in-progress:hover {
+  border-color: rgba(0, 217, 255, 0.75);
+}
+
+.task-pill.task--in-progress {
+  border: 2px solid rgba(0, 217, 255, 0.65);
+  box-sizing: border-box;
+}
+
+/* Light theme */
+.app[data-theme="light"] .todo-item.task--done,
+.app[data-theme="light"] .todo-item.task--done.canvas-task {
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(100, 100, 110, 0.35);
+}
+
+.app[data-theme="light"] .todo-item.task--done .todo-title,
+.app[data-theme="light"] .todo-item.task--done .canvas-task-suffix {
+  color: #94a3b8;
+}
+
+.app[data-theme="light"] .todo-item.task--done .todo-date {
+  color: #94a3b8;
+}
+
+.app[data-theme="light"] .kanban-item.task--done,
+.app[data-theme="light"] .kanban-item.task--done.canvas-task {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(100, 100, 110, 0.35);
+}
+
+.app[data-theme="light"] .kanban-item.task--done .kanban-item-title,
+.app[data-theme="light"] .kanban-item.task--done .canvas-task-suffix {
+  color: #94a3b8;
+}
+
+.app[data-theme="light"] .kanban-item.task--done .kanban-item-footer {
+  color: #94a3b8;
+}
+
+.app[data-theme="light"] .task-pill.task--done,
+.app[data-theme="light"] .task-pill.task--done.canvas-task {
+  background: rgba(180, 180, 190, 0.45);
+  color: #64748b;
+  border: 1px solid rgba(140, 140, 150, 0.45);
+}
+
+.app[data-theme="light"] .todo-item.task--in-progress {
+  border: 2px solid rgba(0, 217, 255, 0.55);
+}
+
+.app[data-theme="light"] .kanban-item.task--in-progress {
+  border: 2px solid rgba(0, 217, 255, 0.55);
+}
+
+.app[data-theme="light"] .task-pill.task--in-progress {
+  border: 2px solid rgba(0, 185, 210, 0.65);
+}

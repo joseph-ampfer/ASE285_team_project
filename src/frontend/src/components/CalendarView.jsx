@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import { isCanvasTask } from '../util/canvasTask'
+import { taskStatusModifierClass } from '../util/taskStatus'
 import './CalendarView.css'
 
 function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggleSubtask }) {
@@ -89,10 +90,11 @@ function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggl
                             <div className="calendar-tasks">
                                 {tasksForDay.map(todo => {
                                     const fromCanvas = isCanvasTask(todo)
+                                    const statusMod = taskStatusModifierClass(todo.status)
                                     return (
                                     <div
                                         key={todo._id}
-                                        className={`task-pill${fromCanvas ? ' canvas-task' : ''}`}
+                                        className={`task-pill${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}`}
                                         onClick={() => setSelectedTaskId(todo._id)}
                                         title={todo.title}
                                     >
