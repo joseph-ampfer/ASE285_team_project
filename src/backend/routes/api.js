@@ -1,4 +1,8 @@
 import express from 'express';
+import User from '../models/User.js'
+import { hashPassword, comparePassword } from '../util/password.js'
+import { generateToken } from '../util/token.js'
+import { requireAuth } from '../util/auth.js';
 import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
@@ -7,9 +11,73 @@ const SETTINGS_ID = 'global';
 
 export function createApiRouter() {
   const router = express.Router();
+  
+  router.use(requireAuth);
+
+  // POST /api/auth/register - Register account
+  router.post('/auth/register', async (req, res) => {
+    try {
+      const { email, password, username } = req.body || {};
+
+      if (!email || !password || !username) {
+        return res.status(400).json({ error: 'missing fields' });
+      }
+
+      const existing = await User.findOne({ email })
+      if (existing) {
+        return res.status(400).json({ error: 'email already in use' })
+      }
+
+      const passwordHash = await hashPassword(password)
+
+      const user = await User.create({
+        email: email.toLowerCase(),
+        passwordHash
+      })
+
+      const token = generateToken(user);
+
+      res.status(201).json({
+        token,
+        user: { id: user._id, email: user.email }
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'failed to register' })
+    }
+  })
+
+  // POST /api/auth/login - Login account
+  router.post('/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body || {}
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'email and password required' })
+      }
+
+      const user = await User.findOne({ email })
+      if (!user) {
+        return res.status(401).json({ error: 'invalid credentials' })
+      }
+
+      const valid = await comparePassword(password, user.passwordHash)
+      if (!valid) {
+        return res.status(401).json({ error: 'invalid credentials' })
+      }
+
+      const token = generateToken(user);
+
+      res.json({
+        token,
+        user: { id: user._id, email: user.email }
+      });
+    } catch (err) {
+      res.status(500).json({ error: 'failed to login' })
+    }
+  })
 
   // GET /api/posts - List all posts
-  router.get('/posts', async (req, res) => {
+  router.get('/posts', requireAuth, async (req, res) => {
     try {
       const posts = await Post
         .find({ owner: req.user.id })
@@ -23,7 +91,7 @@ export function createApiRouter() {
   });
 
   // GET /api/posts/:id - Get a single post
-  router.get('/posts/:id', async (req, res) => {
+  router.get('/posts/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -43,7 +111,7 @@ export function createApiRouter() {
   });
 
   // POST /api/posts - Create a new post
-  router.post('/posts', async (req, res) => {
+  router.post('/posts', requireAuth, async (req, res) => {
     try {
       const { title, date, description, status, subtasks } = req.body || {};
       
@@ -73,7 +141,7 @@ export function createApiRouter() {
   });
 
   // PUT /api/posts/:id - Update a post
-  router.put('/posts/:id', async (req, res) => {
+  router.put('/posts/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { title, date, description, status, subtasks } = req.body || {};
@@ -106,7 +174,7 @@ export function createApiRouter() {
       if (isNowDone && !wasDoneBefore) {
         updatedPost.completedAt = new Date();
         await updatedPost.save();
-        gamification = await awardForTaskCompletion(updatedPost);
+        gamification = await awardForTaskCompletion(updatedPost, req.user.id);
       }
 
       console.log('Post updated:', updatedPost);
@@ -122,7 +190,7 @@ export function createApiRouter() {
   });
 
   // DELETE /api/posts/:id - Delete a post
-  router.delete('/posts/:id', async (req, res) => {
+  router.delete('/posts/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
 
@@ -144,9 +212,9 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/stats - current points/level/streak
-  router.get('/gamification/stats', async (_req, res) => {
+  router.get('/gamification/stats', requireAuth, async (_req, res) => {
     try {
-      const stats = await getStats();
+      const stats = await getStats(_req.user.id);
       res.json(stats);
     } catch (error) {
       console.error('Error fetching gamification stats:', error);
@@ -155,7 +223,7 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/history - recent completion history
-  router.get('/gamification/history', async (_req, res) => {
+  router.get('/gamification/history', requireAuth, async (_req, res) => {
     try {
       const events = await getHistory(100);
       res.json(events);
@@ -166,7 +234,7 @@ export function createApiRouter() {
   });
 
   // GET /api/settings - get app settings (e.g. theme)
-  router.get('/settings', async (_req, res) => {
+  router.get('/settings', requireAuth, async (_req, res) => {
     try {
       let settings = await AppSettings.findById(SETTINGS_ID);
       if (!settings) {
@@ -183,7 +251,7 @@ export function createApiRouter() {
   });
 
   // PUT /api/settings - update app settings
-  router.put('/settings', async (req, res) => {
+  router.put('/settings', requireAuth, async (req, res) => {
     try {
       const { theme, canvasApiToken } = req.body || {};
       if (theme !== undefined && theme !== 'dark' && theme !== 'light') {
@@ -208,7 +276,7 @@ export function createApiRouter() {
   });
   
   // POST /api/posts/:id/subtasks - Add a subtask
-  router.post('/posts/:id/subtasks', async (req, res) => {
+  router.post('/posts/:id/subtasks', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
       const { title } = req.body || {};
@@ -237,8 +305,8 @@ export function createApiRouter() {
     }
   });
 
-  // PATCH /api/posts/:postId/subtasks/:subtaskId
-  router.patch('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
+  // PATCH /api/posts/:postId/subtasks/:subtaskId - Toggle subtask completion 
+  router.patch('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
       const { postId, subtaskId } = req.params;
 
@@ -268,8 +336,8 @@ export function createApiRouter() {
     }
   });
 
-  // DELETE /api/posts/:postId/subtasks/:subtaskId
-  router.delete('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
+  // DELETE /api/posts/:postId/subtasks/:subtaskId - Delete a subtask
+  router.delete('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
       const { postId, subtaskId } = req.params;
 
