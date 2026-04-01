@@ -5,6 +5,7 @@ import { KanbanStatus } from '../../../backend/models/Post'
 import { isCanvasTask } from '../util/canvasTask'
 import { taskStatusModifierClass } from '../util/taskStatus'
 import { compareByDueDate, compareKanbanDoneOrder } from '../util/taskSort'
+import { isArchivedDoneTask } from '../util/archiveTask'
 
 const COLUMNS = [
     { id: KanbanStatus.TODO, title: 'Todo', emoji: '📥' },
@@ -81,9 +82,12 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
     }
 
     const getTasksByStatus = (status) => {
-        const list = todos.filter(
-            todo => (todo.status || KanbanStatus.TODO) === status
-        )
+        const list = todos.filter((todo) => {
+            const st = todo.status || KanbanStatus.TODO
+            if (st !== status) return false
+            if (status === KanbanStatus.DONE && isArchivedDoneTask(todo)) return false
+            return true
+        })
         if (status === KanbanStatus.TODO || status === KanbanStatus.IN_PROGRESS) {
             return [...list].sort(compareByDueDate)
         }
