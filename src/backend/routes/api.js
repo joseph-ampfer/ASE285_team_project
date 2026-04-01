@@ -416,14 +416,12 @@ export function createApiRouter() {
   // PATCH /api/posts/:postId/subtasks/:subtaskId - Toggle subtask completion 
   router.patch('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
@@ -449,14 +447,12 @@ export function createApiRouter() {
   // DELETE /api/posts/:postId/subtasks/:subtaskId - Delete a subtask
   router.delete('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
