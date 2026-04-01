@@ -4,6 +4,10 @@ import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
 import { getNextId } from '../util/util.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
+import {
+  verifyToken,
+  getFutureIncompletePlannerAssignments,
+} from '../services/canvas.js';
 
 const SETTINGS_ID = 'global';
 
@@ -81,6 +85,11 @@ export function createApiRouter() {
       }
 
       const { title, date, description, status, subtasks } = req.body || {};
+      const previous = await Post.findById(id);
+      if (!previous) {
+        return res.status(404).json({ error: 'Post not found' });
+      }
+
       const update = {};
       if (title !== undefined) update.title = title;
       if (date !== undefined) update.date = date;
@@ -88,16 +97,11 @@ export function createApiRouter() {
       if (status !== undefined) update.status = status;
       if (subtasks !== undefined) update.subtasks = subtasks;
 
-      const previous = await Post.findById(id);
       const updatedPost = await Post.findByIdAndUpdate(
         id,
         update,
         { new: true, runValidators: true } // Return the updated document
       );
-
-      if (!updatedPost) {
-        return res.status(404).json({ error: 'Post not found' });
-      }
 
       let gamification = null;
       const isNowDone = updatedPost.status === KanbanStatus.DONE;
@@ -204,6 +208,107 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error updating settings:', error);
       res.status(500).json({ error: 'Failed to update settings' });
+    }
+  });
+
+  // GET /api/canvas/verify - verify saved Canvas token
+  router.get('/canvas/verify', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ ok: false, error: 'Canvas API token not set' });
+      }
+      const result = await verifyToken(token);
+      if (!result.ok) {
+        return res.status(502).json({ ok: false, error: result.error });
+      }
+      return res.json({ ok: true, user: result.user });
+    } catch (error) {
+      console.error('Error verifying Canvas token:', error);
+      return res.status(500).json({ ok: false, error: 'Failed to verify Canvas token' });
+    }
+  });
+
+  // POST /api/canvas/sync — planner: future due + incomplete; skip existing canvasAssignmentId
+  router.post('/canvas/sync', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ error: 'Canvas API token not set' });
+      }
+
+      const plannerResult = await getFutureIncompletePlannerAssignments(token);
+      if (!plannerResult.ok) {
+        return res
+          .status(502)
+          .json({ error: plannerResult.error || 'Failed' });
+      }
+
+      const assignments = plannerResult.assignments || [];
+      let created = 0;
+      let skipped = 0;
+      const courseIds = new Set();
+
+      for (const assignment of assignments) {
+        const assignmentId = Number(assignment.id);
+        if (Number.isNaN(assignmentId)) continue;
+
+        const cidRaw = assignment.course_id;
+        const courseId =
+          cidRaw != null && !Number.isNaN(Number(cidRaw)) ? Number(cidRaw) : null;
+        if (courseId != null) courseIds.add(courseId);
+
+        const title =
+          assignment.name ||
+          assignment.title ||
+          `Canvas assignment ${assignmentId}`;
+        const date = assignment.due_at
+          ? String(assignment.due_at).split('T')[0]
+          : new Date().toISOString().slice(0, 10);
+        const description =
+          typeof assignment.course_name === 'string' ? assignment.course_name.trim() : '';
+
+        const existing = await Post.findOne({ canvasAssignmentId: assignmentId });
+        if (existing) {
+          skipped += 1;
+          continue;
+        }
+
+        const nextId = await getNextId();
+        const newPost = new Post({
+          _id: nextId,
+          title,
+          date,
+          description,
+          status: KanbanStatus.TODO,
+          subtasks: [],
+          canvasAssignmentId: assignmentId,
+          canvasCourseId: courseId,
+        });
+        await newPost.save();
+        created += 1;
+      }
+
+      const payload = {
+        synced: true,
+        source: 'planner',
+        created,
+        skipped,
+        assignmentCount: assignments.length,
+        courseCount: courseIds.size,
+      };
+      if (assignments.length === 0) {
+        payload.message =
+          'No matching assignments in the planner window (future due, not completed).';
+      } else if (created === 0 && skipped > 0) {
+        payload.message = 'All matching Canvas assignments are already in your list.';
+      }
+      return res.json(payload);
+    } catch (error) {
+      console.error('Error syncing Canvas:', error);
+      return res.status(500).json({ error: 'Failed to sync Canvas' });
     }
   });
   
