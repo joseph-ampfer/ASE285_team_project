@@ -27,6 +27,7 @@ function TodoList({
   const [modalMode, setModalMode] = useState('view')
   const [isCreating, setIsCreating] = useState(false)
   const [archiveExpanded, setArchiveExpanded] = useState(false)
+  const [dragOverGroupStatus, setDragOverGroupStatus] = useState(null)
 
   const handleAddTask = (form) => {
     onAdd(form.title, form.date, form.description)
@@ -87,6 +88,41 @@ function TodoList({
       />
     ))
 
+  const handleListDragStart = (e, todoId) => {
+    e.dataTransfer.setData('todoId', String(todoId))
+    e.dataTransfer.effectAllowed = 'move'
+    e.currentTarget.classList.add('dragging')
+  }
+
+  const handleListDragEnd = (e) => {
+    e.currentTarget.classList.remove('dragging')
+    setDragOverGroupStatus(null)
+  }
+
+  const handleGroupDragOver = (e, status) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverGroupStatus !== status) setDragOverGroupStatus(status)
+  }
+
+  const handleGroupDrop = (e, targetStatus) => {
+    e.preventDefault()
+    setDragOverGroupStatus(null)
+    const raw = e.dataTransfer.getData('todoId')
+    const todoId = Number.parseInt(raw, 10)
+    if (Number.isNaN(todoId)) return
+    const todo = todos.find((t) => t._id === todoId)
+    if (!todo || isArchivedDoneTask(todo)) return
+    const current = todo.status || KanbanStatus.TODO
+    if (current === targetStatus) return
+    onEdit(todoId, {
+      title: todo.title,
+      date: todo.date,
+      description: todo.description,
+      status: targetStatus,
+    })
+  }
+
   const sortedFlat = useMemo(
     () => [...filteredActive].sort(compareByDueDate),
     [filteredActive]
@@ -139,17 +175,36 @@ function TodoList({
 
       {!showFilterEmpty && todos.length > 0 && listGroupByStatus && (
         <div className="todo-list-main todo-list-grouped">
-          {groupedSections.map(
-            ({ title, items }) =>
-              items.length > 0 && (
-                <section key={title} className="list-status-group">
-                  <h3 className="list-status-group-title">{title}</h3>
-                  <div className="list-status-group-items">
-                    {renderTodoItems(items)}
-                  </div>
-                </section>
-              )
-          )}
+          {groupedSections.map(({ status, title, items }) => (
+            <section
+              key={status}
+              className={`list-status-group${
+                dragOverGroupStatus === status ? ' drag-over' : ''
+              }`}
+              onDragOver={(e) => handleGroupDragOver(e, status)}
+              onDrop={(e) => handleGroupDrop(e, status)}
+              onDragLeave={() => setDragOverGroupStatus(null)}
+            >
+              <h3 className="list-status-group-title">{title}</h3>
+              <div className="list-status-group-items">
+                {items.length === 0 ? (
+                  <div className="list-status-group-empty">Drop tasks here</div>
+                ) : (
+                  items.map((todo) => (
+                    <TodoItem
+                      key={todo._id}
+                      todo={todo}
+                      onDelete={onDelete}
+                      onSelect={openTask}
+                      listDraggable
+                      onListDragStart={handleListDragStart}
+                      onListDragEnd={handleListDragEnd}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          ))}
         </div>
       )}
 

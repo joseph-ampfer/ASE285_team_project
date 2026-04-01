@@ -1,7 +1,14 @@
 import { isCanvasTask } from '../util/canvasTask'
 import { taskStatusModifierClass } from '../util/taskStatus'
 
-function TodoItem({ todo, onDelete, onSelect }) {
+function TodoItem({
+  todo,
+  onDelete,
+  onSelect,
+  listDraggable = false,
+  onListDragStart,
+  onListDragEnd,
+}) {
   const handleDelete = () => {
     if (window.confirm(`Delete "${todo.title}"?`)) {
       onDelete(todo._id)
@@ -13,7 +20,14 @@ function TodoItem({ todo, onDelete, onSelect }) {
 
   return (
     <div
-      className={`todo-item${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}`}
+      className={`todo-item${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}${listDraggable ? ' todo-item--list-draggable' : ''}`}
+      draggable={listDraggable}
+      onDragStart={
+        listDraggable && onListDragStart
+          ? (e) => onListDragStart(e, todo._id)
+          : undefined
+      }
+      onDragEnd={listDraggable ? onListDragEnd : undefined}
       onClick={() => onSelect(todo, 'view')}
     >
       <div className="todo-content">
