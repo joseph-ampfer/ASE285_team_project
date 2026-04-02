@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
-
-const JWT_SECRET = process.env.JWT_SECRET;
+import { JWT_SECRET } from './env.js';
 
 /**
  * Express middleware to require authentication

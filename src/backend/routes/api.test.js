@@ -7,9 +7,7 @@ import { createApiRouter } from '../routes/api.js'
 import Post, { KanbanStatus } from '../models/Post.js'
 import jwt from 'jsonwebtoken'
 import User from '../models/User.js'
-import { requireAuth } from '../util/auth.js'
-
-const JWT_SECRET = process.env.JWT_SECRET
+import { JWT_SECRET } from '../util/env.js'
 
 async function createTestUser() {
   const user = await User.create({
@@ -41,7 +39,7 @@ describe('API Routes', () => {
     user = await createTestUser()
     token = generateTestToken(user)
 
-    app.use('/api', requireAuth, createApiRouter())
+    app.use('/api', createApiRouter())
   })
 
   const authHeader = (req) =>

@@ -1,6 +1,5 @@
 import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET;
+import { JWT_SECRET } from './env.js';
 
 /**
  * Generate a JWT for a user

@@ -16,57 +16,61 @@ const SETTINGS_ID = 'global';
 export function createApiRouter() {
   const router = express.Router();
   
-  router.use(requireAuth);
-
   // POST /api/auth/register - Register account
   router.post('/auth/register', async (req, res) => {
     try {
       const { email, password, username } = req.body || {};
 
       if (!email || !password || !username) {
-        return res.status(400).json({ error: 'missing fields' });
+        return res.status(400).json({ error: 'Missing fields' });
       }
 
-      const existing = await User.findOne({ email })
+      const existing = await User.findOne({ email });
       if (existing) {
-        return res.status(400).json({ error: 'email already in use' })
+        return res.status(400).json({ error: 'Email already in use' });
       }
 
-      const passwordHash = await hashPassword(password)
+      const passwordHash = await hashPassword(password);
 
       const user = await User.create({
+        username,
         email: email.toLowerCase(),
         passwordHash
-      })
+      });
 
       const token = generateToken(user);
 
       res.status(201).json({
         token,
-        user: { id: user._id, email: user.email }
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username
+        }
       });
-    } catch (err) {
-      res.status(500).json({ error: 'failed to register' })
+    } catch (error) {
+      console.error('Error registering:', error);
+      res.status(500).json({ error: 'Failed to register' });
     }
-  })
+  });
 
   // POST /api/auth/login - Login account
   router.post('/auth/login', async (req, res) => {
     try {
-      const { email, password } = req.body || {}
+      const { email, password } = req.body || {};
 
       if (!email || !password) {
-        return res.status(400).json({ error: 'email and password required' })
+        return res.status(400).json({ error: 'Email and password required' });
       }
 
-      const user = await User.findOne({ email })
+      const user = await User.findOne({ email });
       if (!user) {
-        return res.status(401).json({ error: 'invalid credentials' })
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
 
-      const valid = await comparePassword(password, user.passwordHash)
+      const valid = await comparePassword(password, user.passwordHash);
       if (!valid) {
-        return res.status(401).json({ error: 'invalid credentials' })
+        return res.status(401).json({ error: 'Invalid credentials' });
       }
 
       const token = generateToken(user);
@@ -75,10 +79,13 @@ export function createApiRouter() {
         token,
         user: { id: user._id, email: user.email }
       });
-    } catch (err) {
-      res.status(500).json({ error: 'failed to login' })
+    } catch (error) {
+      console.error('Error logging in:', error);
+      res.status(500).json({ error: 'Failed to login' });
     }
-  })
+  });
+
+  router.use(requireAuth);
 
   // GET /api/posts - List all posts
   router.get('/posts', requireAuth, async (req, res) => {
@@ -120,10 +127,10 @@ export function createApiRouter() {
       const { title, date, description, status, subtasks } = req.body || {};
       
       if (!title) {
-        return res.status(400).json({ error: 'title is required' });
+        return res.status(400).json({ error: 'Title is required' });
       }
       if (!date) {
-        return res.status(400).json({ error: 'date is required' });
+        return res.status(400).json({ error: 'Date is required' });
       }
       
       const newPost = new Post({
