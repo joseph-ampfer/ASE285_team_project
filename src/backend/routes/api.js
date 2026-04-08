@@ -156,15 +156,6 @@ export function createApiRouter() {
     try {
       const { id } = req.params;
       const { title, date, description, status, subtasks } = req.body || {};
-      const update = {};
-      if (title !== undefined) update.title = title;
-      if (date !== undefined) update.date = date;
-      if (description !== undefined) update.description = description;
-      if (status !== undefined && previous.canvasAssignmentId == null) {
-        update.status = status;
-        update.completed = status === KanbanStatus.DONE;
-      }
-      if (subtasks !== undefined) update.subtasks = subtasks;
 
       const previous = await Post.findOne({
         _id: id,
@@ -175,6 +166,17 @@ export function createApiRouter() {
         return res.status(404).json({ error: 'Post not found' });
       }
 
+      // Prepare updates
+      const update = {};
+      if (title !== undefined) update.title = title;
+      if (date !== undefined) update.date = date;
+      if (description !== undefined) update.description = description;
+      if (status !== undefined && previous.canvasAssignmentId == null) {
+        update.status = status;
+        update.completed = status === KanbanStatus.DONE;
+      }
+      if (subtasks !== undefined) update.subtasks = subtasks;
+
       const updatedPost = await Post.findOneAndUpdate(
         { _id: id, owner: req.user.id },
         update,
@@ -183,7 +185,7 @@ export function createApiRouter() {
 
       let gamification = null;
       const isNowDone = updatedPost.status === KanbanStatus.DONE;
-      const wasDoneBefore = previous?.status === KanbanStatus.DONE;
+      const wasDoneBefore = previous.status === KanbanStatus.DONE;
 
       if (isNowDone && !wasDoneBefore) {
         updatedPost.completedAt = new Date();
