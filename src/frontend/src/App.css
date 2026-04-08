@@ -459,3 +459,32 @@ input:focus, textarea:focus {
 input::placeholder, textarea::placeholder {
   color: #666;
 }
+
+.auth-container {
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.auth-card {
+  width: 100%;
+  max-width: 420px;
+  text-align: center;
+}
+
+.app-title {
+  background: linear-gradient(90deg, #00d9ff, #00ff88);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-card .form-buttons {
+  justify-content: center;
+}
+
+.auth-card .error-message {
+  margin-top: 1rem;
+}

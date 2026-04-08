@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
-import axios from 'axios'
+import axios from './axios'
+import Login from './components/Login'
+import { clearAuth } from './auth'
 import TodoList from './components/TodoList'
 import CalendarView from './components/CalendarView'
 import KanbanView from './components/KanbanView'
@@ -12,6 +14,9 @@ import './App.css'
 const API_URL = '/api/posts'
 
 function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(
+    !!localStorage.getItem('token')
+  )
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -28,6 +33,8 @@ function App() {
 
   // Fetch all todos and settings on mount
   useEffect(() => {
+    if (!isAuthenticated) return
+
     fetchTodos()
     fetchGamification()
     fetchSettings()
@@ -36,7 +43,7 @@ function App() {
         return axios.post('/api/canvas/sync').then(() => fetchTodos()).catch(() => {})
       }
     }).catch(() => {})
-  }, [])
+  }, [isAuthenticated])
 
   // Apply theme to body for global styles
   useEffect(() => {
@@ -93,7 +100,7 @@ function App() {
   const addTodo = async (title, date, description) => {
     try {
       const response = await axios.post(API_URL, { title, date, description, status: 'todo' })
-      setTodos([...todos, response.data])
+      setTodos(prev => [...prev, response.data])
       setError(null)
     } catch (err) {
       console.error('Error adding todo:', err)
@@ -107,7 +114,7 @@ function App() {
       const data = response.data
 
       if (data && data.post) {
-        setTodos(todos.map(todo =>
+        setTodos(prev => prev.map(todo =>
           todo._id === id ? data.post : todo
         ))
         if (data.gamification) {
@@ -116,7 +123,7 @@ function App() {
           fetchGamification()
         }
       } else {
-        setTodos(todos.map(todo =>
+        setTodos(prev => prev.map(todo =>
           todo._id === id ? data : todo
         ))
       }
@@ -130,7 +137,7 @@ function App() {
   const deleteTodo = async (id) => {
     try {
       await axios.delete(`${API_URL}/${id}`)
-      setTodos(todos.filter(todo => todo._id !== id))
+      setTodos(prev => prev.filter(todo => todo._id !== id))
       setError(null)
     } catch (err) {
       console.error('Error deleting todo:', err)
@@ -142,7 +149,7 @@ function App() {
     try {
       const response = await axios.post(`/api/posts/${taskId}/subtasks`, { title })
 
-      setTodos(todos.map(todo =>
+      setTodos(prev => prev.map(todo =>
         todo._id === taskId ? response.data : todo
       ))
 
@@ -159,7 +166,7 @@ function App() {
         `/api/posts/${taskId}/subtasks/${subtaskId}`
       )
 
-      setTodos(todos.map(todo =>
+      setTodos(prev => prev.map(todo =>
         todo._id === taskId ? response.data : todo
       ))
 
@@ -212,58 +219,73 @@ function App() {
 
   return (
     <div className="app" data-theme={theme}>
-      <div className="app-top-controls">
-        <CanvasIntegration onSyncComplete={fetchTodos} />
-        <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
-      </div>
+      {!isAuthenticated ? (
+        <Login onLogin={() => setIsAuthenticated(true)} />
+      ) : (
+        <>
+          <div className="app-top-controls">
+            <button
+              className='btn-secondary'
+              onClick={() => {
+                clearAuth()
+                setIsAuthenticated(false)
+              }}
+            >
+              Logout
+            </button>
+            <CanvasIntegration onSyncComplete={fetchTodos} />
+            <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+          </div>
 
-      <GamificationPanel
-        stats={stats}
-        history={history}
-        open={isGamificationOpen}
-        onToggle={() => setIsGamificationOpen(!isGamificationOpen)}
-      />
+          <GamificationPanel
+            stats={stats}
+            history={history}
+            open={isGamificationOpen}
+            onToggle={() => setIsGamificationOpen(!isGamificationOpen)}
+          />
 
-      <header className="app-header">
-        <h1>📝 <span className='app-title'>TaskFlow</span></h1>
-        <p className="subtitle">Manage your tasks efficiently</p>
+          <header className="app-header">
+            <h1>📝 <span className='app-title'>TaskFlow</span></h1>
+            <p className="subtitle">Manage your tasks efficiently</p>
 
-        <nav className="app-nav">
-          <button
-            className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
-            onClick={() => setCurrentView('list')}
-          >
-            📋 List
-          </button>
-          <button
-            className={`nav-btn ${currentView === 'kanban' ? 'active' : ''}`}
-            onClick={() => setCurrentView('kanban')}
-          >
-            ⚡ Kanban
-          </button>
-          <button
-            className={`nav-btn ${currentView === 'calendar' ? 'active' : ''}`}
-            onClick={() => setCurrentView('calendar')}
-          >
-            📅 Calendar
-          </button>
-        </nav>
-      </header>
+            <nav className="app-nav">
+              <button
+                className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
+                onClick={() => setCurrentView('list')}
+              >
+                📋 List
+              </button>
+              <button
+                className={`nav-btn ${currentView === 'kanban' ? 'active' : ''}`}
+                onClick={() => setCurrentView('kanban')}
+              >
+                ⚡ Kanban
+              </button>
+              <button
+                className={`nav-btn ${currentView === 'calendar' ? 'active' : ''}`}
+                onClick={() => setCurrentView('calendar')}
+              >
+                📅 Calendar
+              </button>
+            </nav>
+          </header>
 
-      {error && (
-        <div className="error-message">
-          {error}
-          <button onClick={() => setError(null)}>×</button>
-        </div>
+          {error && (
+            <div className="error-message">
+              {error}
+              <button onClick={() => setError(null)}>×</button>
+            </div>
+          )}
+
+          <main className="app-main">
+            {renderContent()}
+          </main>
+
+          <footer className="app-footer">
+            <p>ASE285 Team Project</p>
+          </footer>
+        </>
       )}
-
-      <main className="app-main">
-        {renderContent()}
-      </main>
-
-      <footer className="app-footer">
-        <p>ASE285 Team Project</p>
-      </footer>
     </div>
   )
 }
