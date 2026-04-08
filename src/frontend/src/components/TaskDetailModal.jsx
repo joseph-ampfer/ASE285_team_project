@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import Portal from './Portal'
-import './CalendarView.css'
+import './TaskDetailModal.css'
 
 function TaskDetailModal({
     task,
@@ -33,12 +33,7 @@ function TaskDetailModal({
 	const handleSave = () => {
 		if (!form.title.trim() || !form.date) return
 		if (isCreate) onAddTask(form)
-		else onUpdateTask(task._id, {
-			title: form.title,
-				date: form.date,
-				description: form.description,
-				status: form.status
-			})
+		else onUpdateTask(task._id, { ...form, status: form.status })
 		onClose()
 	}
 
@@ -64,9 +59,9 @@ function TaskDetailModal({
 		<Portal>
 		<div className="modal-overlay" onClick={handleOverlayClick}>
 			<div className="modal-content">
-			<div className="modal-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+			<div className="modal-header">
 				<h3>{isCreate ? 'Add Task' : 'Task Details'}</h3>
-				<div className="modal-header-actions" style={{ display: 'flex', gap: '0.5rem' }}>
+				<div className="modal-header-actions">
 				{mode === 'view' && !isCreate && (
 					<>
 					<button className="btn-icon btn-edit" title="Edit" onClick={() => setMode('edit')}>✏️</button>
@@ -82,34 +77,34 @@ function TaskDetailModal({
 				</div>
 			</div>
 
-			<div className="modal-info" style={{ marginTop: '1rem' }}>
+			<div className="modal-info">
 				<div className="info-group">
 				<label>
 					<span className="modal-label">Title</span>
 					{mode === 'view' ? <p className="modal-value">{task?.title}</p> :
-						<input value={form.title} onChange={e => handleChange('title', e.target.value)} />}
+					<input value={form.title} onChange={e => handleChange('title', e.target.value)} />}
 				</label>
 				</div>
 
-				<div className="info-group" style={{ marginTop: '1rem' }}>
+				<div className="info-group">
 				<label>
 					<span className="modal-label">Due Date</span>
 					{mode === 'view' ? <p className="modal-value">📅 {task?.date}</p> :
-						<input type="date" value={form.date} onChange={e => handleChange('date', e.target.value)} />}
+					<input type="date" value={form.date} onChange={e => handleChange('date', e.target.value)} />}
 				</label>
 				</div>
 
 				{mode === 'view' && (
-					<div className="info-group" style={{ marginTop: '1rem' }}>
-						<span className="modal-label">Status</span>
-						<p className="modal-value" style={{ textTransform: 'capitalize' }}>
-							{task?.status?.replace('-', ' ') || 'Todo'}
-						</p>
-					</div>
+				<div className="info-group">
+					<span className="modal-label">Status</span>
+					<p className="modal-value" style={{ textTransform: 'capitalize' }}>
+					{task?.status?.replace('-', ' ') || 'Todo'}
+					</p>
+				</div>
 				)}
 
 				{showDescription && (
-				<div className="info-group" style={{ marginTop: '1rem' }}>
+				<div className="info-group">
 					<label>
 					<span className="modal-label">Description</span>
 					{mode === 'view' ? <p className="modal-value">{task?.description}</p> :
@@ -119,7 +114,7 @@ function TaskDetailModal({
 				)}
 
 				{showSubtasks && (
-				<div className="info-group" style={{ marginTop: '1rem' }}>
+				<div className="info-group">
 					<span className="modal-label">Subtasks</span>
 					<ul className="subtask-list">
 					{task?.subtasks?.map(subtask => (
@@ -135,7 +130,7 @@ function TaskDetailModal({
 					</ul>
 
 					{mode === 'edit' && !isCreate && (
-					<div className="subtask-add" style={{ marginTop: '0.5rem' }}>
+					<div className="subtask-add">
 						<input
 							type="text"
 							placeholder="Add subtask..."
