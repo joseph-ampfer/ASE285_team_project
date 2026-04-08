@@ -6,7 +6,10 @@ import KanbanView from './components/KanbanView'
 import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
+import ListViewToolbar from './components/ListViewToolbar'
 import './App.css'
+import './styles/canvasTask.css'
+import './styles/taskStatus.css'
 
 // API base URL - uses Vite proxy in development
 const API_URL = '/api/posts'
@@ -25,6 +28,9 @@ function App() {
   const [history, setHistory] = useState([])
   const [isGamificationOpen, setIsGamificationOpen] = useState(false)
   const [theme, setTheme] = useState('dark')
+  const [listGroupByStatus, setListGroupByStatus] = useState(false)
+  const [listShowCanvas, setListShowCanvas] = useState(true)
+  const [listShowNonCanvas, setListShowNonCanvas] = useState(true)
 
   // Fetch all todos and settings on mount
   useEffect(() => {
@@ -205,6 +211,9 @@ function App() {
             onDelete={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask}
+            listGroupByStatus={listGroupByStatus}
+            listShowCanvas={listShowCanvas}
+            listShowNonCanvas={listShowNonCanvas}
           />
         )
     }
@@ -248,6 +257,17 @@ function App() {
             📅 Calendar
           </button>
         </nav>
+
+        {currentView === 'list' && (
+          <ListViewToolbar
+            groupByStatus={listGroupByStatus}
+            onGroupByStatusChange={setListGroupByStatus}
+            showCanvas={listShowCanvas}
+            onShowCanvasChange={setListShowCanvas}
+            showNonCanvas={listShowNonCanvas}
+            onShowNonCanvasChange={setListShowNonCanvas}
+          />
+        )}
       </header>
 
       {error && (

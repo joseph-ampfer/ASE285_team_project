@@ -1,6 +1,16 @@
 import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
+import { isCanvasTask } from '../util/canvasTask'
+import { taskStatusModifierClass } from '../util/taskStatus'
 import './CalendarView.css'
+
+const CALENDAR_PILL_TITLE_MAX = 14
+
+function truncateCalendarTitle(text, maxLen = CALENDAR_PILL_TITLE_MAX) {
+  const s = text == null ? '' : String(text)
+  if (s.length <= maxLen) return s
+  return `${s.slice(0, maxLen)}···`
+}
 
 function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggleSubtask }) {
     const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -86,16 +96,21 @@ function CalendarView({ todos, onUpdateTask, onDeleteTask, onAddSubtask, onToggl
                         >
                             <span className="day-number">{dayObj.day}</span>
                             <div className="calendar-tasks">
-                                {tasksForDay.map(todo => (
+                                {tasksForDay.map(todo => {
+                                    const fromCanvas = isCanvasTask(todo)
+                                    const statusMod = taskStatusModifierClass(todo.status)
+                                    return (
                                     <div
                                         key={todo._id}
-                                        className="task-pill"
+                                        className={`task-pill${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}`}
                                         onClick={() => setSelectedTaskId(todo._id)}
                                         title={todo.title}
                                     >
-                                        {todo.title}
+                                        {truncateCalendarTitle(todo.title)}
+                                        {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )

@@ -2,6 +2,10 @@ import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
 import './KanbanView.css'
 import { KanbanStatus } from '../../../backend/models/Post'
+import { isCanvasTask } from '../util/canvasTask'
+import { taskStatusModifierClass } from '../util/taskStatus'
+import { compareByDueDate, compareKanbanDoneOrder } from '../util/taskSort'
+import { isArchivedDoneTask } from '../util/archiveTask'
 
 const COLUMNS = [
     { id: KanbanStatus.TODO, title: 'Todo', emoji: '📥' },
@@ -78,7 +82,19 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
     }
 
     const getTasksByStatus = (status) => {
-        return todos.filter(todo => (todo.status || KanbanStatus.TODO) === status)
+        const list = todos.filter((todo) => {
+            const st = todo.status || KanbanStatus.TODO
+            if (st !== status) return false
+            if (status === KanbanStatus.DONE && isArchivedDoneTask(todo)) return false
+            return true
+        })
+        if (status === KanbanStatus.TODO || status === KanbanStatus.IN_PROGRESS) {
+            return [...list].sort(compareByDueDate)
+        }
+        if (status === KanbanStatus.DONE) {
+            return [...list].sort(compareKanbanDoneOrder)
+        }
+        return list
     }
 
     return (
@@ -112,10 +128,13 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                             )}
 
                             <div className="kanban-tasks">
-                                {columnTasks.map((todo, index) => (
+                                {columnTasks.map((todo, index) => {
+                                    const fromCanvas = isCanvasTask(todo)
+                                    const statusMod = taskStatusModifierClass(todo.status)
+                                    return (
                                     <div
                                         key={todo._id}
-                                        className="kanban-item"
+                                        className={`kanban-item${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}`}
                                         draggable
                                         onDragStart={(e) => handleDragStart(e, todo._id)}
                                         onDragEnd={handleDragEnd}
@@ -124,12 +143,16 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                                         {column.id === 'in-progress' && index === 0 && (
                                             <span className="focus-badge">Focus</span>
                                         )}
-                                        <div className="kanban-item-title">{todo.title}</div>
+                                        <div className="kanban-item-title">
+                                            {todo.title}
+                                            {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
+                                        </div>
                                         <div className="kanban-item-footer">
                                             <span>📅 {todo.date}</span>
                                         </div>
                                     </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )
