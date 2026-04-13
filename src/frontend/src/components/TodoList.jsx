@@ -1,32 +1,71 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import TodoItem from './TodoItem'
 import TaskDetailModal from './TaskDetailModal'
+import { KanbanStatus } from '../../../backend/models/Post'
+import { isCanvasTask } from '../util/canvasTask'
+import { isArchivedDoneTask } from '../util/archiveTask'
+import { compareByDueDate, compareDoneRecentFirst } from '../util/taskSort'
 
-function TodoList({ todos, onAdd, onEdit, onDelete, onAddSubtask, onToggleSubtask }) {
+const GROUP_LABELS = [
+  { status: KanbanStatus.IN_PROGRESS, title: 'In progress' },
+  { status: KanbanStatus.TODO, title: 'To do' },
+  { status: KanbanStatus.DONE, title: 'Done' },
+]
+
+function TodoList({
+  todos,
+  onAdd,
+  onEdit,
+  onDelete,
+  onAddSubtask,
+  onToggleSubtask,
+  listGroupByStatus = false,
+  listShowCanvas = true,
+  listShowNonCanvas = true,
+}) {
   const [selectedTask, setSelectedTask] = useState(null)
   const [modalMode, setModalMode] = useState('view')
   const [isCreating, setIsCreating] = useState(false)
+  const [archiveExpanded, setArchiveExpanded] = useState(false)
+  const [dragOverGroupStatus, setDragOverGroupStatus] = useState(null)
 
   const handleAddTask = (form) => {
     onAdd(form.title, form.date, form.description)
   }
 
   const handleUpdateTask = (id, form) => {
-	onEdit(id, {
-		title: form.title,
-		date: form.date,
-		description: form.description,
-		status: form.status
-	})
+    onEdit(id, {
+      title: form.title,
+      date: form.date,
+      description: form.description,
+      status: form.status,
+    })
   }
-  
+
   useEffect(() => {
     if (!selectedTask) return
-
-    const updated = todos.find(t => t._id === selectedTask._id)
+    const updated = todos.find((t) => t._id === selectedTask._id)
     if (updated) setSelectedTask(updated)
-
   }, [todos, selectedTask])
+
+  const passesCanvasFilter = useCallback(
+    (todo) => {
+      const c = isCanvasTask(todo)
+      if (c && !listShowCanvas) return false
+      if (!c && !listShowNonCanvas) return false
+      return true
+    },
+    [listShowCanvas, listShowNonCanvas]
+  )
+
+  const { filteredArchived, filteredActive } = useMemo(() => {
+    const arch = todos.filter(isArchivedDoneTask)
+    const active = todos.filter((t) => !isArchivedDoneTask(t))
+    return {
+      filteredArchived: arch.filter(passesCanvasFilter),
+      filteredActive: active.filter(passesCanvasFilter),
+    }
+  }, [todos, passesCanvasFilter])
 
   const closeModal = () => {
     setSelectedTask(null)
@@ -34,9 +73,89 @@ function TodoList({ todos, onAdd, onEdit, onDelete, onAddSubtask, onToggleSubtas
     setModalMode('view')
   }
 
+  const openTask = (task, mode) => {
+    setSelectedTask(task)
+    setModalMode(mode)
+  }
+
+  const renderTodoItems = (list) =>
+    list.map((todo) => (
+      <TodoItem
+        key={todo._id}
+        todo={todo}
+        onDelete={onDelete}
+        onSelect={openTask}
+      />
+    ))
+
+  const handleListDragStart = (e, todoId) => {
+    e.dataTransfer.setData('todoId', String(todoId))
+    e.dataTransfer.effectAllowed = 'move'
+    e.currentTarget.classList.add('dragging')
+  }
+
+  const handleListDragEnd = (e) => {
+    e.currentTarget.classList.remove('dragging')
+    setDragOverGroupStatus(null)
+  }
+
+  const handleGroupDragOver = (e, status) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverGroupStatus !== status) setDragOverGroupStatus(status)
+  }
+
+  const handleGroupDrop = (e, targetStatus) => {
+    e.preventDefault()
+    setDragOverGroupStatus(null)
+    const raw = e.dataTransfer.getData('todoId')
+    const todoId = Number.parseInt(raw, 10)
+    if (Number.isNaN(todoId)) return
+    const todo = todos.find((t) => t._id === todoId)
+    if (!todo || isArchivedDoneTask(todo)) return
+    const current = todo.status || KanbanStatus.TODO
+    if (current === targetStatus) return
+    onEdit(todoId, {
+      title: todo.title,
+      date: todo.date,
+      description: todo.description,
+      status: targetStatus,
+    })
+  }
+
+  const sortedFlat = useMemo(
+    () => [...filteredActive].sort(compareByDueDate),
+    [filteredActive]
+  )
+
+  const groupedSections = useMemo(() => {
+    return GROUP_LABELS.map(({ status, title }) => {
+      const raw = filteredActive.filter(
+        (t) => (t.status || KanbanStatus.TODO) === status
+      )
+      const sorted =
+        status === KanbanStatus.DONE
+          ? [...raw].sort(compareDoneRecentFirst)
+          : [...raw].sort(compareByDueDate)
+      return { status, title, items: sorted }
+    })
+  }, [filteredActive])
+
+  const archivedSorted = useMemo(
+    () => [...filteredArchived].sort(compareDoneRecentFirst),
+    [filteredArchived]
+  )
+
+  const showFilterEmpty =
+    todos.length > 0 &&
+    filteredActive.length === 0 &&
+    filteredArchived.length === 0
+
   return (
     <div className="todo-list">
-      <button onClick={() => setIsCreating(true)}>➕ Add Task</button>
+      <button type="button" onClick={() => setIsCreating(true)}>
+        ➕ Add Task
+      </button>
 
       {todos.length === 0 && (
         <div className="todo-list-empty">
@@ -44,17 +163,71 @@ function TodoList({ todos, onAdd, onEdit, onDelete, onAddSubtask, onToggleSubtas
         </div>
       )}
 
-      {todos.map(todo => (
-        <TodoItem 
-          key={todo._id}
-          todo={todo}
-          onDelete={onDelete}
-          onSelect={(task, mode) => {
-            setSelectedTask(task)
-            setModalMode(mode)
-          }}
-        />
-      ))}
+      {showFilterEmpty && (
+        <div className="todo-list-empty todo-list-filter-empty">
+          <p>No tasks match the current filters.</p>
+        </div>
+      )}
+
+      {!showFilterEmpty && todos.length > 0 && !listGroupByStatus && (
+        <div className="todo-list-main">{renderTodoItems(sortedFlat)}</div>
+      )}
+
+      {!showFilterEmpty && todos.length > 0 && listGroupByStatus && (
+        <div className="todo-list-main todo-list-grouped">
+          {groupedSections.map(({ status, title, items }) => (
+            <section
+              key={status}
+              className={`list-status-group${
+                dragOverGroupStatus === status ? ' drag-over' : ''
+              }`}
+              onDragOver={(e) => handleGroupDragOver(e, status)}
+              onDrop={(e) => handleGroupDrop(e, status)}
+              onDragLeave={() => setDragOverGroupStatus(null)}
+            >
+              <h3 className="list-status-group-title">{title}</h3>
+              <div className="list-status-group-items">
+                {items.length === 0 ? (
+                  <div className="list-status-group-empty">Drop tasks here</div>
+                ) : (
+                  items.map((todo) => (
+                    <TodoItem
+                      key={todo._id}
+                      todo={todo}
+                      onDelete={onDelete}
+                      onSelect={openTask}
+                      listDraggable
+                      onListDragStart={handleListDragStart}
+                      onListDragEnd={handleListDragEnd}
+                    />
+                  ))
+                )}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {filteredArchived.length > 0 && (
+        <div className="list-archive">
+          <button
+            type="button"
+            className="list-archive-header"
+            onClick={() => setArchiveExpanded((v) => !v)}
+            aria-expanded={archiveExpanded}
+          >
+            <span className="list-archive-chevron" aria-hidden>
+              {archiveExpanded ? '▼' : '▶'}
+            </span>
+            Archived ({filteredArchived.length})
+          </button>
+          {archiveExpanded && (
+            <div className="list-archive-body">
+              {renderTodoItems(archivedSorted)}
+            </div>
+          )}
+        </div>
+      )}
 
       {(selectedTask || isCreating) && (
         <TaskDetailModal
@@ -73,4 +246,3 @@ function TodoList({ todos, onAdd, onEdit, onDelete, onAddSubtask, onToggleSubtas
 }
 
 export default TodoList
-

@@ -1,14 +1,40 @@
-function TodoItem({ todo, onDelete, onSelect }) {
+import { isCanvasTask } from '../util/canvasTask'
+import { taskStatusModifierClass } from '../util/taskStatus'
+
+function TodoItem({
+  todo,
+  onDelete,
+  onSelect,
+  listDraggable = false,
+  onListDragStart,
+  onListDragEnd,
+}) {
   const handleDelete = () => {
     if (window.confirm(`Delete "${todo.title}"?`)) {
       onDelete(todo._id)
     }
   }
 
+  const fromCanvas = isCanvasTask(todo)
+  const statusMod = taskStatusModifierClass(todo.status)
+
   return (
-    <div className="todo-item" onClick={() => onSelect(todo, 'view')}>
+    <div
+      className={`todo-item${fromCanvas ? ' canvas-task' : ''}${statusMod ? ` ${statusMod}` : ''}${listDraggable ? ' todo-item--list-draggable' : ''}`}
+      draggable={listDraggable}
+      onDragStart={
+        listDraggable && onListDragStart
+          ? (e) => onListDragStart(e, todo._id)
+          : undefined
+      }
+      onDragEnd={listDraggable ? onListDragEnd : undefined}
+      onClick={() => onSelect(todo, 'view')}
+    >
       <div className="todo-content">
-        <div className="todo-title">{todo.title}</div>
+        <div className="todo-title">
+          {todo.title}
+          {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
+        </div>
         <div className="todo-date">📅 {todo.date}</div>
       </div>
       <div className="todo-actions">

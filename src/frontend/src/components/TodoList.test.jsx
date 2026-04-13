@@ -9,7 +9,7 @@ import TodoList from './TodoList'
 */
 vi.mock('./TodoItem', () => ({
   default: ({ todo, onSelect }) => (
-    <button onClick={onSelect}>
+    <button type="button" onClick={() => onSelect(todo, 'view')}>
       Select {todo.title}
     </button>
   )
@@ -31,17 +31,19 @@ vi.mock('./TaskDetailModal', () => ({
 
 describe('TodoList', () => {
   const mockTodos = [
-    { _id: '1', title: 'Task 1' },
-    { _id: '2', title: 'Task 2' }
+    { _id: 1, title: 'Task 1', date: '2026-04-01', status: 'todo' },
+    { _id: 2, title: 'Task 2', date: '2026-04-02', status: 'todo' },
   ]
 
   const onEditMock = vi.fn()
   const onDeleteMock = vi.fn()
+  const onAddMock = vi.fn()
 
   it('renders empty state when there are no todos', () => {
     render(
       <TodoList
         todos={[]}
+        onAdd={onAddMock}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
       />
@@ -56,6 +58,7 @@ describe('TodoList', () => {
     render(
       <TodoList
         todos={mockTodos}
+        onAdd={onAddMock}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
       />
@@ -69,6 +72,7 @@ describe('TodoList', () => {
     render(
       <TodoList
         todos={mockTodos}
+        onAdd={onAddMock}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
       />
@@ -85,6 +89,7 @@ describe('TodoList', () => {
     render(
       <TodoList
         todos={mockTodos}
+        onAdd={onAddMock}
         onEdit={onEditMock}
         onDelete={onDeleteMock}
       />

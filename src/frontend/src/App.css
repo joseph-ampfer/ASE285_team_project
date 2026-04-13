@@ -49,6 +49,11 @@
   margin-top: 1rem;
 }
 
+.app-header .list-view-toolbar {
+  margin: 1rem auto 0;
+  max-width: 100%;
+}
+
 .nav-btn {
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -205,6 +210,134 @@
   gap: 0.75rem;
 }
 
+.list-view-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.25rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+}
+
+.list-view-toolbar-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: #b8b8c8;
+  cursor: pointer;
+  user-select: none;
+}
+
+.list-view-toolbar-label input {
+  cursor: pointer;
+}
+
+.list-view-toolbar-sep {
+  width: 1px;
+  height: 1rem;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.list-status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  padding: 0.35rem 0.65rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  transition: background 0.2s ease, border-color 0.2s ease;
+}
+
+.list-status-group.drag-over {
+  background: rgba(0, 217, 255, 0.06);
+  border-color: rgba(0, 217, 255, 0.35);
+}
+
+.list-status-group-title {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #00d9ff;
+}
+
+.list-status-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+}
+
+.list-status-group-empty {
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #777;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.todo-list-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.todo-list-grouped {
+  gap: 1rem;
+}
+
+.list-archive {
+  margin-top: 0.25rem;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 120, 130, 0.35);
+  background: rgba(90, 90, 98, 0.25);
+}
+
+.list-archive-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: none;
+  background: rgba(75, 75, 82, 0.4);
+  color: #c4c4cc;
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.list-archive-header:hover {
+  background: rgba(85, 85, 92, 0.5);
+}
+
+.list-archive-chevron {
+  display: inline-block;
+  width: 1rem;
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.list-archive-body {
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  background: rgba(60, 60, 68, 0.2);
+}
+
 .todo-list-empty {
   text-align: center;
   color: #666;
@@ -229,6 +362,19 @@
 .todo-item:hover {
   transform: translateX(4px);
   border-color: rgba(0, 217, 255, 0.3);
+}
+
+.todo-item--list-draggable {
+  cursor: grab;
+}
+
+.todo-item--list-draggable:active {
+  cursor: grabbing;
+}
+
+.todo-item.dragging {
+  opacity: 0.55;
+  transform: scale(0.98);
 }
 
 .todo-content {
@@ -365,6 +511,57 @@
 .app[data-theme="light"] .todo-date {
   color: #64748b;
 }
+
+.app[data-theme="light"] .list-view-toolbar {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .list-view-toolbar-label {
+  color: #475569;
+}
+
+.app[data-theme="light"] .list-view-toolbar-sep {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.app[data-theme="light"] .list-status-group {
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+.app[data-theme="light"] .list-status-group.drag-over {
+  background: rgba(0, 217, 255, 0.05);
+  border-color: rgba(0, 217, 255, 0.3);
+}
+
+.app[data-theme="light"] .list-status-group-empty {
+  color: #94a3b8;
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.app[data-theme="light"] .list-status-group-title {
+  color: #0891b2;
+}
+
+.app[data-theme="light"] .list-archive {
+  border-color: rgba(100, 100, 110, 0.35);
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.app[data-theme="light"] .list-archive-header {
+  background: rgba(0, 0, 0, 0.07);
+  color: #334155;
+}
+
+.app[data-theme="light"] .list-archive-header:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.app[data-theme="light"] .list-archive-body {
+  background: rgba(0, 0, 0, 0.04);
+}
+
 /* Subtask List */
 .subtask-list {
   list-style: none;
