@@ -1,8 +1,10 @@
-// routes/api.js - REST API endpoints using Mongoose
 import express from 'express';
+import User from '../models/User.js'
+import { hashPassword, comparePassword } from '../util/password.js'
+import { generateToken } from '../util/token.js'
+import { requireAuth } from '../util/auth.js';
 import Post, { KanbanStatus } from '../models/Post.js';
 import AppSettings from '../models/AppSettings.js';
-import { getNextId } from '../util/util.js';
 import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
 import {
   verifyToken,
@@ -13,11 +15,85 @@ const SETTINGS_ID = 'global';
 
 export function createApiRouter() {
   const router = express.Router();
+  
+  // POST /api/auth/register - Register account
+  router.post('/auth/register', async (req, res) => {
+    try {
+      const { email, password, username } = req.body || {};
+
+      if (!email || !password || !username) {
+        return res.status(400).json({ error: 'Missing fields' });
+      }
+
+      const existing = await User.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ error: 'Email already in use' });
+      }
+
+      const passwordHash = await hashPassword(password);
+
+      const user = await User.create({
+        username,
+        email: email.toLowerCase(),
+        passwordHash
+      });
+
+      const token = generateToken(user);
+
+      res.status(201).json({
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username
+        }
+      });
+    } catch (error) {
+      console.error('Error registering:', error);
+      res.status(500).json({ error: 'Failed to register' });
+    }
+  });
+
+  // POST /api/auth/login - Login account
+  router.post('/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body || {};
+
+      if (!email || !password) {
+        return res.status(400).json({ error: 'Email and password required' });
+      }
+
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const valid = await comparePassword(password, user.passwordHash);
+      if (!valid) {
+        return res.status(401).json({ error: 'Invalid credentials' });
+      }
+
+      const token = generateToken(user);
+
+      res.json({
+        token,
+        user: { id: user._id, email: user.email }
+      });
+    } catch (error) {
+      console.error('Error logging in:', error);
+      res.status(500).json({ error: 'Failed to login' });
+    }
+  });
+
+  router.use(requireAuth);
 
   // GET /api/posts - List all posts
-  router.get('/posts', async (req, res) => {
+  router.get('/posts', requireAuth, async (req, res) => {
     try {
-      const posts = await Post.find({}).sort({ _id: 1 });
+      const posts = await Post
+        .find({ owner: req.user.id })
+        .sort({ createdAt: 1 })
+
       res.json(posts);
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -26,14 +102,15 @@ export function createApiRouter() {
   });
 
   // GET /api/posts/:id - Get a single post
-  router.get('/posts/:id', async (req, res) => {
+  router.get('/posts/:id', requireAuth, async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
+      const { id } = req.params;
 
-      const post = await Post.findById(id);
+      const post = await Post.findOne({
+        _id: id,
+        owner: req.user.id
+      });
+
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -45,21 +122,19 @@ export function createApiRouter() {
   });
 
   // POST /api/posts - Create a new post
-  router.post('/posts', async (req, res) => {
+  router.post('/posts', requireAuth, async (req, res) => {
     try {
       const { title, date, description, status, subtasks } = req.body || {};
       
       if (!title) {
-        return res.status(400).json({ error: 'title is required' });
+        return res.status(400).json({ error: 'Title is required' });
       }
       if (!date) {
-        return res.status(400).json({ error: 'date is required' });
+        return res.status(400).json({ error: 'Date is required' });
       }
-
-      const nextId = await getNextId();
       
       const newPost = new Post({
-        _id: nextId,
+        owner: req.user.id,
         title,
         date,
         ...(description !== undefined && { description }),
@@ -77,40 +152,45 @@ export function createApiRouter() {
   });
 
   // PUT /api/posts/:id - Update a post
-  router.put('/posts/:id', async (req, res) => {
+  router.put('/posts/:id', requireAuth, async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
+      const { id } = req.params;
       const { title, date, description, status, subtasks } = req.body || {};
-      const previous = await Post.findById(id);
+
+      const previous = await Post.findOne({
+        _id: id,
+        owner: req.user.id
+      });
+
       if (!previous) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
+      // Prepare updates
       const update = {};
       if (title !== undefined) update.title = title;
       if (date !== undefined) update.date = date;
       if (description !== undefined) update.description = description;
-      if (status !== undefined) update.status = status;
+      if (status !== undefined && previous.canvasAssignmentId == null) {
+        update.status = status;
+        update.completed = status === KanbanStatus.DONE;
+      }
       if (subtasks !== undefined) update.subtasks = subtasks;
 
-      const updatedPost = await Post.findByIdAndUpdate(
-        id,
+      const updatedPost = await Post.findOneAndUpdate(
+        { _id: id, owner: req.user.id },
         update,
-        { new: true, runValidators: true } // Return the updated document
+        { new: true, runValidators: true }
       );
 
       let gamification = null;
       const isNowDone = updatedPost.status === KanbanStatus.DONE;
-      const wasDoneBefore = previous?.status === KanbanStatus.DONE;
+      const wasDoneBefore = previous.status === KanbanStatus.DONE;
 
       if (isNowDone && !wasDoneBefore) {
         updatedPost.completedAt = new Date();
         await updatedPost.save();
-        gamification = await awardForTaskCompletion(updatedPost);
+        gamification = await awardForTaskCompletion(updatedPost, req.user.id);
       }
 
       console.log('Post updated:', updatedPost);
@@ -126,15 +206,15 @@ export function createApiRouter() {
   });
 
   // DELETE /api/posts/:id - Delete a post
-  router.delete('/posts/:id', async (req, res) => {
+  router.delete('/posts/:id', requireAuth, async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
+      const { id } = req.params;
 
-      const deletedPost = await Post.findByIdAndDelete(id);
-      
+      const deletedPost = await Post.findOneAndDelete({
+        _id: id,
+        owner: req.user.id
+      });
+
       if (!deletedPost) {
         return res.status(404).json({ error: 'Post not found' });
       }
@@ -148,9 +228,9 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/stats - current points/level/streak
-  router.get('/gamification/stats', async (_req, res) => {
+  router.get('/gamification/stats', requireAuth, async (_req, res) => {
     try {
-      const stats = await getStats();
+      const stats = await getStats(_req.user.id);
       res.json(stats);
     } catch (error) {
       console.error('Error fetching gamification stats:', error);
@@ -159,7 +239,7 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/history - recent completion history
-  router.get('/gamification/history', async (_req, res) => {
+  router.get('/gamification/history', requireAuth, async (_req, res) => {
     try {
       const events = await getHistory(100);
       res.json(events);
@@ -170,7 +250,7 @@ export function createApiRouter() {
   });
 
   // GET /api/settings - get app settings (e.g. theme)
-  router.get('/settings', async (_req, res) => {
+  router.get('/settings', requireAuth, async (_req, res) => {
     try {
       let settings = await AppSettings.findById(SETTINGS_ID);
       if (!settings) {
@@ -187,7 +267,7 @@ export function createApiRouter() {
   });
 
   // PUT /api/settings - update app settings
-  router.put('/settings', async (req, res) => {
+  router.put('/settings', requireAuth, async (req, res) => {
     try {
       const { theme, canvasApiToken } = req.body || {};
       if (theme !== undefined && theme !== 'dark' && theme !== 'light') {
@@ -313,40 +393,28 @@ export function createApiRouter() {
   });
   
   // POST /api/posts/:id/subtasks - Add a subtask
-  router.post('/posts/:id/subtasks', async (req, res) => {
+  router.post('/posts/:id/subtasks', requireAuth, async (req, res) => {
     try {
-      const id = parseInt(req.params.id, 10);
-      if (Number.isNaN(id)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
+      const { id } = req.params;
       const { title } = req.body || {};
 
       if (!title) {
         return res.status(400).json({ error: 'title is required' });
       }
 
-      const post = await Post.findById(id);
+      const post = await Post.findOne({
+        _id: id,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const nextSubtaskId =
-        post.subtasks?.length > 0
-          ? Math.max(...post.subtasks.map(s => s.id)) + 1
-          : 1;
-
-      const newSubtask = {
-        id: nextSubtaskId,
-        title,
-        completed: false
-      };
-
-      post.subtasks = [...(post.subtasks || []), newSubtask];
+      post.subtasks.push({ title, completed: false });
 
       await post.save();
-      
+
       res.json(post);
     } catch (error) {
       console.error('Error adding subtask:', error);
@@ -354,23 +422,21 @@ export function createApiRouter() {
     }
   });
 
-  // PATCH /api/posts/:postId/subtasks/:subtaskId
-  router.patch('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
+  // PATCH /api/posts/:postId/subtasks/:subtaskId - Toggle subtask completion 
+  router.patch('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const subtask = post.subtasks?.find(s => s.id === subtaskId);
+      const subtask = post.subtasks.id(subtaskId);
 
       if (!subtask) {
         return res.status(404).json({ error: 'Subtask not found' });
@@ -387,29 +453,27 @@ export function createApiRouter() {
     }
   });
 
-  // DELETE /api/posts/:postId/subtasks/:subtaskId
-  router.delete('/posts/:postId/subtasks/:subtaskId', async (req, res) => {
+  // DELETE /api/posts/:postId/subtasks/:subtaskId - Delete a subtask
+  router.delete('/posts/:postId/subtasks/:subtaskId', requireAuth, async (req, res) => {
     try {
-      const postId = parseInt(req.params.postId, 10);
-      const subtaskId = parseInt(req.params.subtaskId, 10);
+      const { postId, subtaskId } = req.params;
 
-      if (Number.isNaN(postId) || Number.isNaN(subtaskId)) {
-        return res.status(400).json({ error: 'Invalid id' });
-      }
-
-      const post = await Post.findById(postId);
+      const post = await Post.findOne({
+        _id: postId,
+        owner: req.user.id,
+      });
 
       if (!post) {
         return res.status(404).json({ error: 'Post not found' });
       }
 
-      const subtaskIndex = post.subtasks?.findIndex(s => s.id === subtaskId);
+      const subtask = post.subtasks.id(subtaskId);
 
-      if (subtaskIndex === -1 || subtaskIndex === undefined) {
+      if (!subtask) {
         return res.status(404).json({ error: 'Subtask not found' });
       }
 
-      post.subtasks.splice(subtaskIndex, 1);
+      subtask.remove();
 
       await post.save();
 
@@ -417,6 +481,126 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error deleting subtask:', error);
       res.status(500).json({ error: 'Failed to delete subtask' });
+    }
+  });
+
+  // GET /api/canvas/verify - verify stored Canvas token
+  router.get('/canvas/verify', async (_req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ ok: false, error: 'Canvas API token not set' });
+      }
+      const result = await verifyToken(token);
+      if (!result.ok) {
+        return res.status(502).json({ ok: false, error: result.error });
+      }
+      res.json({ ok: true, user: result.user });
+    } catch (error) {
+      console.error('Error verifying Canvas token:', error);
+      res.status(500).json({ ok: false, error: 'Failed to verify' });
+    }
+  });
+
+  // POST /api/canvas/sync
+  router.post('/canvas/sync', async (req, res) => {
+    try {
+      const settings = await AppSettings.findById(SETTINGS_ID);
+      const token = settings?.canvasApiToken?.trim();
+      if (!token) {
+        return res.status(400).json({ error: 'Canvas API token not set' });
+      }
+
+      const { ok: coursesOk, courses, error: coursesError } = await getCourses(token);
+      if (!coursesOk) {
+        return res.status(502).json({
+          error: coursesError || 'Canvas API error',
+          details: coursesError,
+        });
+      }
+      if (!courses?.length) {
+        return res.status(200).json({
+          synced: true,
+          created: 0,
+          updated: 0,
+          courseCount: 0,
+          message: 'No courses found for this account',
+        });
+      }
+
+      let created = 0;
+      let updated = 0;
+      const errors = [];
+      const courseId = (c) => (c.id != null ? Number(c.id) : c.id);
+      const courseName = (c) => c.name || c.course_code || `Course ${c.id}`;
+
+      for (const course of courses) {
+        const cid = courseId(course);
+        if (cid == null || Number.isNaN(cid)) {
+          errors.push({ course: courseName(course), error: 'Invalid course id' });
+          continue;
+        }
+        const { ok: assignOk, assignments, error: assignError } = await getAssignments(
+          token,
+          cid
+        );
+        if (!assignOk) {
+          console.warn('[Canvas sync] Assignments failed for course', courseName(course), assignError);
+          errors.push({ course: courseName(course), error: assignError });
+          continue;
+        }
+        if (!assignments?.length) continue;
+
+        for (const a of assignments) {
+          const aid = a.id != null ? Number(a.id) : a.id;
+          const title = a.name || a.title || 'Assignment';
+          const dateStr = a.due_at
+            ? a.due_at.split('T')[0]
+            : new Date().toISOString().slice(0, 10);
+
+          const existing = await Post.findOne({ canvasAssignmentId: aid });
+          if (existing) {
+            existing.title = title;
+            existing.date = dateStr;
+            const subResult = await getSubmission(token, cid, aid);
+            if (subResult.ok && subResult.submitted) {
+              existing.status = KanbanStatus.DONE;
+              existing.completed = true;
+              if (!existing.completedAt) existing.completedAt = new Date();
+            }
+            await existing.save();
+            updated += 1;
+          } else {
+            const nextId = await getNextId();
+            const newPost = new Post({
+              _id: nextId,
+              title,
+              date: dateStr,
+              description: '',
+              status: KanbanStatus.TODO,
+              completed: false,
+              completedAt: null,
+              canvasAssignmentId: aid,
+              canvasCourseId: cid,
+            });
+            await newPost.save();
+            created += 1;
+          }
+        }
+      }
+
+      const payload = {
+        synced: true,
+        created,
+        updated,
+        courseCount: courses.length,
+      };
+      if (errors.length) payload.errors = errors;
+      res.json(payload);
+    } catch (error) {
+      console.error('Error syncing Canvas:', error);
+      res.status(500).json({ error: 'Failed to sync Canvas' });
     }
   });
 

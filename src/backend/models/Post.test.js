@@ -1,16 +1,19 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import mongoose from 'mongoose';
+import { describe, it, expect } from 'vitest'
 import Post, { KanbanStatus } from './Post.js'
 
 describe('Post model', () => {
   it('requires title and date', async () => {
-    const post = new Post({ _id: 1 })
+    const post = new Post({
+      owner: new mongoose.Types.ObjectId(),
+  })
 
     await expect(post.validate()).rejects.toThrow()
   })
 
   it('applies default values', async () => {
     const post = new Post({
-      _id: 1,
+      owner: new mongoose.Types.ObjectId(),
       title: 'Test',
       date: '2026-01-01',
     })
@@ -23,7 +26,7 @@ describe('Post model', () => {
 
   it('rejects invalid status', async () => {
     const post = new Post({
-      _id: 1,
+      owner: new mongoose.Types.ObjectId(),
       title: 'Test',
       date: '2026-01-01',
       status: 'invalid',
@@ -34,10 +37,10 @@ describe('Post model', () => {
 
   it('creates subtasks with default completed state', async () => {
     const post = new Post({
-      _id: 1,
+      owner: new mongoose.Types.ObjectId(),
       title: 'Task',
       date: '2026-01-01',
-      subtasks: [{ id: 1, title: 'Subtask' }]
+      subtasks: [{ title: 'Subtask' }]
     })
 
     await post.validate()

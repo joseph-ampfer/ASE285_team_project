@@ -41,7 +41,7 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
 
     const handleDrop = (e, columnId) => {
         e.preventDefault()
-        const todoId = parseInt(e.dataTransfer.getData('todoId'), 10)
+        const todoId = e.dataTransfer.getData('todoId')
         setDragOverColumn(null)
 
         const todo = todos.find(t => t._id === todoId)

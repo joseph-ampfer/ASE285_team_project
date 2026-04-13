@@ -150,72 +150,6 @@
   filter: brightness(1.1);
 }
 
-/* Modal Styling */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.8);
-  backdrop-filter: blur(8px);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-  animation: modalFadeIn 0.3s ease;
-}
-
-@keyframes modalFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-content {
-  background: #1a1a2e;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
-  position: relative;
-  animation: modalZoom 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-@keyframes modalZoom {
-  from { transform: scale(0.8); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
-}
-
-.modal-content h3 {
-  margin-top: 0;
-  color: #00ff88;
-  font-size: 1.5rem;
-}
-
-.modal-info {
-  margin: 1.5rem 0;
-  color: #ccc;
-}
-
-.modal-info p {
-  margin: 0.5rem 0;
-}
-
-.modal-label {
-  color: #888;
-  font-size: 0.875rem;
-  display: block;
-}
-
-.modal-value {
-  font-size: 1.1rem;
-  color: #eee;
-}
-
-.btn-close {
-  width: 100%;
-  margin-top: 1rem;
-}
-
 /* light mode */
 .app[data-theme="light"] .calendar-container {
   background: rgba(255, 255, 255, 0.9);
@@ -255,28 +189,5 @@
 }
 
 .app[data-theme="light"] .day-number {
-  color: #64748b;
-}
-
-.app[data-theme="light"] .modal-overlay {
-  background: rgba(0, 0, 0, 0.4);
-}
-
-.app[data-theme="light"] .modal-content {
-  background: #fff;
-  border-color: rgba(0, 0, 0, 0.08);
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15);
-}
-
-.app[data-theme="light"] .modal-content h3 {
-  color: #00ff88;
-}
-
-.app[data-theme="light"] .modal-info,
-.app[data-theme="light"] .modal-value {
-  color: #1e293b;
-}
-
-.app[data-theme="light"] .modal-label {
   color: #64748b;
 }
