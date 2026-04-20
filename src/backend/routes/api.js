@@ -225,9 +225,9 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/stats - current points/level/streak
-  router.get('/gamification/stats', requireAuth, async (_req, res) => {
+  router.get('/gamification/stats', requireAuth, async (req, res) => {
     try {
-      const stats = await getStats(_req.user.id);
+      const stats = await getStats(req.user.id);
       res.json(stats);
     } catch (error) {
       console.error('Error fetching gamification stats:', error);
@@ -236,9 +236,9 @@ export function createApiRouter() {
   });
 
   // GET /api/gamification/history - recent completion history
-  router.get('/gamification/history', requireAuth, async (_req, res) => {
+  router.get('/gamification/history', requireAuth, async (req, res) => {
     try {
-      const events = await getHistory(100);
+      const events = await getHistory(req.user.id, 100);
       res.json(events);
     } catch (error) {
       console.error('Error fetching gamification history:', error);
