@@ -1,7 +1,6 @@
 import GamificationStats from '../models/GamificationStats.js';
 import GamificationEvent from '../models/GamificationEvent.js';
 
-const STATS_ID = 'global';
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
 function dateToYmdUTC(date) {
@@ -24,10 +23,19 @@ function nextLevelAt(level) {
   return level * 100;
 }
 
-async function getOrCreateStats() {
-  const existing = await GamificationStats.findById(STATS_ID);
+
+function statsIdForUser(userId) {
+  if (!userId) {
+    throw new Error('userId is required for gamification');
+  }
+  return String(userId);
+}
+
+async function getOrCreateStats(userId) {
+  const id = statsIdForUser(userId);
+  const existing = await GamificationStats.findById(id);
   if (existing) return existing;
-  return await GamificationStats.create({ _id: STATS_ID });
+  return await GamificationStats.create({ _id: id });
 }
 
 function updateStreak(stats, completionDay) {
@@ -79,8 +87,8 @@ function calcPointsForCompletion({ dueDateYmd, completedAt, streakCount }) {
   return { gained, base, earlyBonus, comboBonus, daysEarly };
 }
 
-export async function awardForTaskCompletion(todo) {
-  const stats = await getOrCreateStats();
+export async function awardForTaskCompletion(todo, userId) {
+  const stats = await getOrCreateStats(userId);
 
   const completedAt = new Date();
   const completionDay = dateToYmdUTC(completedAt);
@@ -97,10 +105,11 @@ export async function awardForTaskCompletion(todo) {
 
   await stats.save();
 
-  const eventId = `${todo?._id}-${completedAt.getTime()}`;
+  const eventId = `${userId}-${todo?._id}-${completedAt.getTime()}`;
   await GamificationEvent.create({
     _id: eventId,
-    postId: todo?._id,
+    owner: userId,
+    postId: String(todo?._id ?? ''),
     title: todo?.title ?? 'Untitled Task',
     date: todo?.date ?? '',
     gained: scoring.gained,
@@ -133,8 +142,8 @@ export async function awardForTaskCompletion(todo) {
   };
 }
 
-export async function getStats() {
-  const stats = await getOrCreateStats();
+export async function getStats(userId) {
+  const stats = await getOrCreateStats(userId);
   stats.level = computeLevel(stats.points);
   await stats.save();
 
@@ -143,12 +152,15 @@ export async function getStats() {
     level: stats.level,
     streakCount: stats.streakCount,
     lastCompletionDay: stats.lastCompletionDay,
-      nextLevelAt: nextLevelAt(stats.level),
+    nextLevelAt: nextLevelAt(stats.level),
   };
 }
 
-export async function getHistory(limit = 50) {
-  const events = await GamificationEvent.find({})
+export async function getHistory(userId, limit = 50) {
+  if (!userId) {
+    throw new Error('userId is required for gamification history');
+  }
+  const events = await GamificationEvent.find({ owner: userId })
     .sort({ createdAt: -1 })
     .limit(limit)
     .lean();

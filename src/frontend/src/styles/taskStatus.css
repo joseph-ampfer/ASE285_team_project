@@ -1,4 +1,4 @@
-/* Done list (default / dark theme — light overrides below) */
+/* Done list */
 .todo-item.task--done,
 .todo-item.task--done.canvas-task {
   background: rgba(38, 38, 44, 0.78);

@@ -87,7 +87,7 @@ function TodoList({
         onSelect={openTask}
       />
     ));
-  
+
 
   const handleListDragStart = (e, todoId) => {
     e.dataTransfer.setData('todoId', String(todoId))
@@ -108,18 +108,19 @@ function TodoList({
 
   const handleGroupDrop = (e, targetStatus) => {
     e.preventDefault()
-    const todoId = e.dataTransfer.getData('todoId')
     setDragOverGroupStatus(null)
-
-    const todo = todos.find(t => t._id === todoId)
-    if (todo && todo.status !== targetStatus) {
-        onEdit(todo._id, {
-            title: todo.title,
-            date: todo.date,
-            description: todo.description,
-            status: targetStatus
-        })
-    }
+    const todoId = e.dataTransfer.getData('todoId')
+    if (!todoId) return
+    const todo = todos.find((t) => String(t._id) === todoId)
+    if (!todo || isArchivedDoneTask(todo)) return
+    const current = todo.status || KanbanStatus.TODO
+    if (current === targetStatus) return
+    onEdit(todo._id, {
+      title: todo.title,
+      date: todo.date,
+      description: todo.description,
+      status: targetStatus,
+    })
   }
 
   const sortedFlat = useMemo(
