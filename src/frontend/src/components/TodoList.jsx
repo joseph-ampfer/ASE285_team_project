@@ -108,8 +108,8 @@ function TodoList({
 
   const handleGroupDrop = (e, targetStatus) => {
     e.preventDefault()
-    const todoId = e.dataTransfer.getData('todoId')
     setDragOverGroupStatus(null)
+    const todoId = e.dataTransfer.getData('todoId')
     if (!todoId) return
     const todo = todos.find((t) => String(t._id) === todoId)
     if (!todo || isArchivedDoneTask(todo)) return
