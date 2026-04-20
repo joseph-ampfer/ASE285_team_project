@@ -17,7 +17,7 @@ function completedAtMs(todo) {
   return Number.isNaN(t) ? null : t
 }
 
-/** Done column: older completion first (top), most recent last (bottom). */
+/** Done column: older completed first */
 export function compareKanbanDoneOrder(a, b) {
   const ta = completedAtMs(a)
   const tb = completedAtMs(b)
@@ -27,7 +27,7 @@ export function compareKanbanDoneOrder(a, b) {
   return Number(a._id) - Number(b._id)
 }
 
-/** List grouped Done: most recently completed first (top). */
+/** List grouped Done: most recently completed first  */
 export function compareDoneRecentFirst(a, b) {
   const ta = completedAtMs(a)
   const tb = completedAtMs(b)

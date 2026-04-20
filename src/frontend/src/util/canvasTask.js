@@ -1,6 +1,3 @@
-/**
- * Tasks synced from Canvas store a numeric canvasAssignmentId.
- */
 export function isCanvasTask(todo) {
   const id = todo?.canvasAssignmentId
   if (id == null) return false
