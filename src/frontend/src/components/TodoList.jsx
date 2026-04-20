@@ -87,7 +87,7 @@ function TodoList({
         onSelect={openTask}
       />
     ));
-  
+
 
   const handleListDragStart = (e, todoId) => {
     e.dataTransfer.setData('todoId', String(todoId))
