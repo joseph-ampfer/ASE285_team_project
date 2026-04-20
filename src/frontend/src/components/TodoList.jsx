@@ -43,10 +43,10 @@ function TodoList({
   }
 
   useEffect(() => {
-    if (!selectedTask) return
-    const updated = todos.find((t) => t._id === selectedTask._id)
-    if (updated) setSelectedTask(updated)
-  }, [todos, selectedTask])
+    if (!selectedTask) return;
+    const updated = todos.find((t) => t._id === selectedTask._id);
+    if (updated) setSelectedTask(updated);
+  }, [todos, selectedTask]);
 
   const passesCanvasFilter = useCallback(
     (todo) => {
@@ -56,7 +56,7 @@ function TodoList({
       return true
     },
     [listShowCanvas, listShowNonCanvas]
-  )
+  );
 
   const { filteredArchived, filteredActive } = useMemo(() => {
     const arch = todos.filter(isArchivedDoneTask)
@@ -65,18 +65,18 @@ function TodoList({
       filteredArchived: arch.filter(passesCanvasFilter),
       filteredActive: active.filter(passesCanvasFilter),
     }
-  }, [todos, passesCanvasFilter])
+  }, [todos, passesCanvasFilter]);
 
   const closeModal = () => {
     setSelectedTask(null)
     setIsCreating(false)
     setModalMode('view')
-  }
+  };
 
   const openTask = (task, mode) => {
     setSelectedTask(task)
     setModalMode(mode)
-  }
+  };
 
   const renderTodoItems = (list) =>
     list.map((todo) => (
@@ -86,7 +86,8 @@ function TodoList({
         onDelete={onDelete}
         onSelect={openTask}
       />
-    ))
+    ));
+  
 
   const handleListDragStart = (e, todoId) => {
     e.dataTransfer.setData('todoId', String(todoId))
@@ -107,9 +108,8 @@ function TodoList({
 
   const handleGroupDrop = (e, targetStatus) => {
     e.preventDefault()
-    setDragOverGroupStatus(null)
-
     const todoId = e.dataTransfer.getData('todoId')
+    setDragOverGroupStatus(null)
     if (!todoId) return
     const todo = todos.find((t) => String(t._id) === todoId)
     if (!todo || isArchivedDoneTask(todo)) return
