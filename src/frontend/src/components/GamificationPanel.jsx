@@ -12,10 +12,13 @@ function ProgressBar({ value, max }) {
 function GamificationPanel({ stats, history, open, onToggle }) {
   const { points, level, streakCount, nextLevelAt } = stats || {}
   const pointsToNext = Math.max(0, (nextLevelAt || 0) - (points || 0))
+  const levelStartAt = Math.max(0, (nextLevelAt || 100) - 100)
+  const levelSpan = Math.max(1, (nextLevelAt || 100) - levelStartAt)
+  const pointsInLevel = Math.max(0, (points || 0) - levelStartAt)
   const levelFillPercent = Math.min(
     100,
-    (nextLevelAt && nextLevelAt > 0)
-      ? Math.round(((points || 0) / nextLevelAt) * 100)
+    (levelSpan > 0)
+      ? Math.round((pointsInLevel / levelSpan) * 100)
       : 0
   )
 
@@ -50,20 +53,19 @@ function GamificationPanel({ stats, history, open, onToggle }) {
       <div className="gp-card">
         <div className="gp-header">
           <div className="gp-level">
-            <span className="gp-level-label">Level</span>
             <span className="gp-level-value">Lv. {level ?? 1}</span>
           </div>
           <div className="gp-points">
-            <span className="gp-points-value">{points ?? 0} pts</span>
+            <span className="gp-points-value">{points ?? 0} points</span>
             <span className="gp-points-sub">
               {pointsToNext > 0
-                ? `${pointsToNext} pts to next level`
+                ? `${pointsToNext} points to next level`
                 : 'Max level reached'}
             </span>
           </div>
         </div>
 
-        <ProgressBar value={points || 0} max={nextLevelAt || 100} />
+        <ProgressBar value={pointsInLevel} max={levelSpan} />
 
         <div className="gp-streak">
           <span>🔥 Streak</span>
