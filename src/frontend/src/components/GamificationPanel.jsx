@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import GamificationShareModal from './GamificationShareModal'
 import './GamificationPanel.css'
 
 function ProgressBar({ value, max }) {
@@ -10,8 +11,17 @@ function ProgressBar({ value, max }) {
   )
 }
 
-function GamificationPanel({ stats, history, open, onToggle, onDeleteHistoryItem }) {
+function GamificationPanel({
+  stats,
+  history,
+  open,
+  onToggle,
+  onDeleteHistoryItem,
+  theme = 'dark',
+  refreshGamification,
+}) {
   const [deletingId, setDeletingId] = useState(null)
+  const [shareOpen, setShareOpen] = useState(false)
   const { points, level, streakCount, nextLevelAt } = stats || {}
   const pointsToNext = Math.max(0, (nextLevelAt || 0) - (points || 0))
   const levelStartAt = Math.max(0, (nextLevelAt || 100) - 100)
@@ -23,6 +33,11 @@ function GamificationPanel({ stats, history, open, onToggle, onDeleteHistoryItem
       ? Math.round((pointsInLevel / levelSpan) * 100)
       : 0
   )
+
+  const openShare = async () => {
+    await refreshGamification?.()
+    setShareOpen(true)
+  }
 
   const handleDeleteHistory = async (eventId, e) => {
     e.preventDefault()
@@ -47,22 +62,27 @@ function GamificationPanel({ stats, history, open, onToggle, onDeleteHistoryItem
         />
       )}
       <div className={`gp-root ${open ? 'gp-open' : ''}`}>
-      <button className="gp-toggle" onClick={onToggle}>
-        <span
-          className="gp-toggle-gauge"
-          style={{ height: `${levelFillPercent}%` }}
-          aria-hidden
-        />
-        <span className="gp-toggle-inner">
-          <span className="gp-toggle-points-wrap">
-            <span className="gp-toggle-points">{points ?? 0}</span>
-            <span className="gp-toggle-pt">pts</span>
+      <div className="gp-column">
+        <button type="button" className="gp-toggle" onClick={onToggle}>
+          <span
+            className="gp-toggle-gauge"
+            style={{ height: `${levelFillPercent}%` }}
+            aria-hidden
+          />
+          <span className="gp-toggle-inner">
+            <span className="gp-toggle-points-wrap">
+              <span className="gp-toggle-points">{points ?? 0}</span>
+              <span className="gp-toggle-pt">pts</span>
+            </span>
+            <span className="gp-toggle-meta">
+              Lv.{level ?? 1} · 🔥 {streakCount ?? 0}
+            </span>
           </span>
-          <span className="gp-toggle-meta">
-            Lv.{level ?? 1} · 🔥 {streakCount ?? 0}
-          </span>
-        </span>
-      </button>
+        </button>
+        <button type="button" className="gp-share-trigger" onClick={openShare}>
+          Share
+        </button>
+      </div>
 
       <div className="gp-card">
         <div className="gp-header">
@@ -122,6 +142,13 @@ function GamificationPanel({ stats, history, open, onToggle, onDeleteHistoryItem
         </div>
       </div>
       </div>
+
+      <GamificationShareModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        stats={stats}
+        theme={theme}
+      />
     </>
   )
 }

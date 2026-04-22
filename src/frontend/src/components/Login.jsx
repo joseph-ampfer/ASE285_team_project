@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import taskflowLogo from '../../assets/taskflow_logo.png'
 import axios from '../axios'
 import { saveAuth } from '../auth'
 
@@ -33,7 +34,16 @@ export default function Login({ onLogin }) {
   return (
     <div className="auth-container">
       <div className="todo-form auth-card">
-        <h1>📝 <span className="app-title">TaskFlow</span></h1>
+        <h1 className="app-brand-heading">
+          <img
+            src={taskflowLogo}
+            alt=""
+            className="app-brand-logo"
+            width={40}
+            height={40}
+          />
+          <span className="app-title">TaskFlow</span>
+        </h1>
         <p className="subtitle">
           {isRegister ? 'Create your account' : 'Welcome back'}
         </p>

@@ -5,6 +5,43 @@
   z-index: 20;
 }
 
+.gp-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-share-trigger {
+  padding: 0.35rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(15, 23, 42, 0.75);
+  color: #e2e8f0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
+}
+
+.gp-share-trigger:hover {
+  transform: translateY(-1px);
+  border-color: rgba(0, 217, 255, 0.45);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+.app[data-theme="light"] .gp-share-trigger {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1e293b;
+}
+
+.app[data-theme="light"] .gp-share-trigger:hover {
+  border-color: rgba(16, 158, 146, 0.45);
+}
+
 .gp-backdrop {
   position: fixed;
   inset: 0;
