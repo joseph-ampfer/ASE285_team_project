@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import './GamificationPanel.css'
 
 function ProgressBar({ value, max }) {
@@ -9,7 +10,8 @@ function ProgressBar({ value, max }) {
   )
 }
 
-function GamificationPanel({ stats, history, open, onToggle }) {
+function GamificationPanel({ stats, history, open, onToggle, onDeleteHistoryItem }) {
+  const [deletingId, setDeletingId] = useState(null)
   const { points, level, streakCount, nextLevelAt } = stats || {}
   const pointsToNext = Math.max(0, (nextLevelAt || 0) - (points || 0))
   const levelStartAt = Math.max(0, (nextLevelAt || 100) - 100)
@@ -21,6 +23,18 @@ function GamificationPanel({ stats, history, open, onToggle }) {
       ? Math.round((pointsInLevel / levelSpan) * 100)
       : 0
   )
+
+  const handleDeleteHistory = async (eventId, e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    if (!onDeleteHistoryItem || deletingId) return
+    setDeletingId(eventId)
+    try {
+      await onDeleteHistoryItem(eventId)
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   return (
     <>
@@ -88,7 +102,20 @@ function GamificationPanel({ stats, history, open, onToggle }) {
                     📅 {event.date} · ✅ {event.completionDay}
                   </span>
                 </div>
-                <div className="gp-history-points">+{event.gained}</div>
+                <div className="gp-history-right">
+                  <div className="gp-history-points">+{event.gained}</div>
+                  {onDeleteHistoryItem && (
+                    <button
+                      type="button"
+                      className="gp-history-remove"
+                      aria-label="Delete this history entry"
+                      disabled={deletingId === event.id}
+                      onClick={(e) => handleDeleteHistory(event.id, e)}
+                    >
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

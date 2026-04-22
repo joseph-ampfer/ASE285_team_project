@@ -103,6 +103,19 @@ function App() {
     }
   }
 
+  const deleteGamificationHistoryItem = async (eventId) => {
+    try {
+      const res = await axios.delete(
+        `/api/gamification/history/${encodeURIComponent(eventId)}`
+      )
+      setStats(res.data.stats)
+      setHistory(res.data.history)
+    } catch (err) {
+      console.error('Error deleting gamification history:', err)
+      throw err
+    }
+  }
+
   const addTodo = async (title, date, description) => {
     try {
       const response = await axios.post(API_URL, { title, date, description, status: 'todo' })
@@ -251,6 +264,7 @@ function App() {
             history={history}
             open={isGamificationOpen}
             onToggle={() => setIsGamificationOpen(!isGamificationOpen)}
+            onDeleteHistoryItem={deleteGamificationHistoryItem}
           />
 
           <header className="app-header">

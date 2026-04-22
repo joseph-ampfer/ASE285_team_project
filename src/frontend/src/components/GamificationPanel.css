@@ -218,6 +218,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 0.35rem;
   padding: 0.45rem 0.5rem;
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.85);
@@ -225,9 +226,46 @@
 }
 
 .gp-history-main {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+.gp-history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+}
+
+.gp-history-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.gp-history-remove:hover:not(:disabled) {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.gp-history-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .gp-history-title {
@@ -295,6 +333,16 @@
 .app[data-theme="light"] .gp-history-item {
   background: rgba(255, 255, 255, 0.8);
   border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app[data-theme="light"] .gp-history-remove {
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.app[data-theme="light"] .gp-history-remove:hover:not(:disabled) {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
 }
 
 @media (max-width: 640px) {

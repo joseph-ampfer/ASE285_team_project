@@ -4,7 +4,7 @@ import { hashPassword, comparePassword } from '../util/password.js'
 import { generateToken } from '../util/token.js'
 import { requireAuth } from '../util/auth.js';
 import Post, { KanbanStatus } from '../models/Post.js';
-import { awardForTaskCompletion, getStats, getHistory } from '../services/gamification.js';
+import { awardForTaskCompletion, getStats, getHistory, deleteHistoryEvent } from '../services/gamification.js';
 import {
   verifyToken,
   getFutureIncompletePlannerAssignments,
@@ -243,6 +243,21 @@ export function createApiRouter() {
     } catch (error) {
       console.error('Error fetching gamification history:', error);
       res.status(500).json({ error: 'Failed to fetch gamification history' });
+    }
+  });
+
+  // DELETE /api/gamification/history/:eventId
+  router.delete('/gamification/history/:eventId', requireAuth, async (req, res) => {
+    try {
+      const { eventId } = req.params;
+      const result = await deleteHistoryEvent(req.user.id, eventId);
+      if (!result) {
+        return res.status(404).json({ error: 'History entry not found' });
+      }
+      res.json(result);
+    } catch (error) {
+      console.error('Error deleting gamification history:', error);
+      res.status(500).json({ error: 'Failed to delete gamification history' });
     }
   });
 

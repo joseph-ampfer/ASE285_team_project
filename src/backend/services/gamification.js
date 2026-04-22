@@ -176,3 +176,45 @@ export async function getHistory(userId, limit = 50) {
     createdAt: e.createdAt,
   }));
 }
+
+/**
+ * Remove history: delete event, subtract gained points, refresh level
+ */
+export async function deleteHistoryEvent(userId, eventId) {
+  if (!userId) {
+    throw new Error('userId is required for gamification');
+  }
+  if (!eventId) {
+    throw new Error('eventId is required');
+  }
+
+  const event = await GamificationEvent.findOne({
+    _id: String(eventId),
+    owner: userId,
+  });
+
+  if (!event) {
+    return null;
+  }
+
+  const gained = Math.max(0, Number(event.gained) || 0);
+
+  await GamificationEvent.deleteOne({ _id: event._id });
+
+  const stats = await getOrCreateStats(userId);
+  stats.points = Math.max(0, stats.points - gained);
+  stats.level = computeLevel(stats.points);
+
+  await stats.save();
+
+  return {
+    stats: {
+      points: stats.points,
+      level: stats.level,
+      streakCount: stats.streakCount,
+      lastCompletionDay: stats.lastCompletionDay,
+      nextLevelAt: nextLevelAt(stats.level),
+    },
+    history: await getHistory(userId, 100),
+  };
+}
