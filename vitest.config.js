@@ -10,13 +10,7 @@ export default defineConfig({
         jsxImportSource: 'react',
     },
     resolve: {
-        alias: {
-            '@testing-library/react': path.resolve(__dirname, 'src/frontend/node_modules/@testing-library/react'),
-            '@testing-library/jest-dom': path.resolve(__dirname, 'src/frontend/node_modules/@testing-library/jest-dom'),
-            '@testing-library/dom': path.resolve(__dirname, 'src/frontend/node_modules/@testing-library/dom'),
-            'react': path.resolve(__dirname, 'src/frontend/node_modules/react'),
-            'react-dom': path.resolve(__dirname, 'src/frontend/node_modules/react-dom'),
-        },
+        dedupe: ['react', 'react-dom'],
     },
     test: {
         globals: true,
