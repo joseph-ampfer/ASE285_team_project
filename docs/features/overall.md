@@ -35,3 +35,27 @@ Requirements
 As a user, I should be able to view tasks on a calendar based on due dates.
 
 As a user, I should be able to click a calendar task to see its details.
+
+Feature 5: Canvas API
+
+Requirements
+
+Feature 6: Gamification
+
+Requirements
+
+Feature 7: User Authentication
+
+Requirements
+
+As a user, I should be able to register an account with a username, email, and password.
+
+As a user, I should be able to log in with my email and password.
+
+As a user, I should be able to log out of my account.
+
+As a user, I should receive an authentication token upon successful login or registration.
+
+As a user, my session should persist so I don’t have to log in again after refreshing the page.
+
+As a user, I should not be able to view or modify another user’s tasks.
