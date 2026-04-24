@@ -41,33 +41,49 @@ function App() {
   const [listShowCanvas, setListShowCanvas] = useState(true)
   const [listShowNonCanvas, setListShowNonCanvas] = useState(true)
 
-  // Fetch all todos and settings on mount
+  // login or refresh-> load theme, auto-import Canvas assignments
   useEffect(() => {
     if (!isAuthenticated) return
 
-    fetchTodos()
-    fetchGamification()
-    fetchSettings()
-    axios.get('/api/settings').then((r) => {
-      if (r.data?.canvasApiToken?.trim()) {
-        return axios.post('/api/canvas/sync').then(() => fetchTodos()).catch(() => {})
+    let active = true
+
+    const bootstrapAuthenticatedSession = async () => {
+      setLoading(true)
+      void fetchGamification()
+
+      try {
+        const settingsRes = await axios.get('/api/settings')
+        if (!active) return
+        setTheme(settingsRes.data.theme || 'dark')
+
+        const canvasToken = settingsRes.data?.canvasApiToken?.trim()
+        if (canvasToken) {
+          try {
+            await axios.post('/api/canvas/sync')
+          } catch (err) {
+            console.error('Canvas auto-sync on session start failed:', err)
+          }
+        }
+        if (!active) return
+        await fetchTodos()
+      } catch (err) {
+        console.error('Error bootstrapping session:', err)
+        if (active) await fetchTodos()
+      } finally {
+        if (!active) setLoading(false)
       }
-    }).catch(() => {})
+    }
+
+    void bootstrapAuthenticatedSession()
+    return () => {
+      active = false
+    }
   }, [isAuthenticated])
 
   // Apply theme to body for global styles
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
   }, [theme])
-
-  const fetchSettings = async () => {
-    try {
-      const res = await axios.get('/api/settings')
-      setTheme(res.data.theme || 'dark')
-    } catch (err) {
-      console.error('Error fetching settings:', err)
-    }
-  }
 
   const handleThemeToggle = async () => {
     const next = theme === 'dark' ? 'light' : 'dark'
