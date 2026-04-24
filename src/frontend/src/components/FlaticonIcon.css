@@ -1,0 +1,48 @@
+
+.flaticon-icon-mono {
+  display: inline-block;
+  vertical-align: middle;
+  flex-shrink: 0;
+  background-color: currentColor;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+}
+
+.flaticon-icon-toolbar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #2a2e36;
+}
+
+body[data-theme='light'] .flaticon-icon-toolbar {
+  color: #1e293b;
+}
+
+body[data-theme='dark'] .btn-edit .flaticon-icon-toolbar,
+body[data-theme='dark'] .btn-delete .flaticon-icon-toolbar,
+body[data-theme='dark'] .btn-secondary .flaticon-icon-toolbar {
+  color: #e8eaed;
+}
+
+.flaticon-icon--bitmap {
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.btn-icon .flaticon-icon-mono,
+.btn-icon .flaticon-icon--bitmap {
+  display: block;
+}
+
+.inline-with-icon {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}

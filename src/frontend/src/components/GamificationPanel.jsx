@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import GamificationShareModal from './GamificationShareModal'
+import FlaticonIcon from './FlaticonIcon'
 import './GamificationPanel.css'
 
 function ProgressBar({ value, max }) {
@@ -119,7 +120,15 @@ function GamificationPanel({
                 <div className="gp-history-main">
                   <span className="gp-history-title">{event.title}</span>
                   <span className="gp-history-date">
-                    📅 {event.date} · ✅ {event.completionDay}
+                    <span className="inline-with-icon">
+                      <FlaticonIcon name="calendar" size={13} />
+                      {event.date}
+                    </span>
+                    <span aria-hidden> · </span>
+                    <span className="inline-with-icon">
+                      <FlaticonIcon name="doneCheckbox" size={13} />
+                      {event.completionDay}
+                    </span>
                   </span>
                 </div>
                 <div className="gp-history-right">

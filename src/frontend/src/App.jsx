@@ -11,6 +11,7 @@ import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
 import ListViewToolbar from './components/ListViewToolbar'
 import CompletionBurst from './components/CompletionBurst'
+import FlaticonIcon from './components/FlaticonIcon'
 import taskflowLogo from '../assets/taskflow_logo.png'
 import './App.css'
 import './styles/canvasTask.css'
@@ -334,19 +335,22 @@ function App() {
                 className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
                 onClick={() => setCurrentView('list')}
               >
-                📋 List
+                <FlaticonIcon name="menu" size={20} />
+                List
               </button>
               <button
                 className={`nav-btn ${currentView === 'kanban' ? 'active' : ''}`}
                 onClick={() => setCurrentView('kanban')}
               >
-                ⚡ Kanban
+                <FlaticonIcon name="kanban" size={20} />
+                Kanban
               </button>
               <button
                 className={`nav-btn ${currentView === 'calendar' ? 'active' : ''}`}
                 onClick={() => setCurrentView('calendar')}
               >
-                📅 Calendar
+                <FlaticonIcon name="calendar" size={20} />
+                Calendar
               </button>
             </nav>
 

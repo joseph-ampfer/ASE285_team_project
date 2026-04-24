@@ -1,5 +1,6 @@
 import { isCanvasTask } from '../util/canvasTask'
 import { taskStatusModifierClass } from '../util/taskStatus'
+import FlaticonIcon from './FlaticonIcon'
 
 function TodoItem({
   todo,
@@ -35,7 +36,10 @@ function TodoItem({
           {todo.title}
           {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
         </div>
-        <div className="todo-date">📅 {todo.date}</div>
+        <div className="todo-date">
+          <FlaticonIcon name="calendar" size={15} />
+          {todo.date}
+        </div>
       </div>
       <div className="todo-actions">
         <button 
@@ -46,7 +50,7 @@ function TodoItem({
           }}
           title="Edit"
         >
-          ✏️
+          <FlaticonIcon name="pencil" size={18} variant="toolbar" />
         </button>
         <button 
           className="btn-icon btn-delete"
@@ -56,7 +60,7 @@ function TodoItem({
           }}
           title="Delete"
         >
-          🗑️
+          <FlaticonIcon name="trash" size={18} variant="toolbar" />
         </button>
       </div>
     </div>
