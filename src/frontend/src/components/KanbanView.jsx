@@ -13,7 +13,7 @@ const COLUMNS = [
     { id: KanbanStatus.DONE, title: 'Done', emoji: '✅' }
 ]
 
-function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubtask }) {
+function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubtask, onCompleteBurst }) {
     const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [dragOverColumn, setDragOverColumn] = useState(null)
     const [isCreating, setIsCreating] = useState(false)
@@ -46,6 +46,9 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
 
         const todo = todos.find(t => t._id === todoId)
         if (todo && todo.status !== columnId) {
+            if (columnId === KanbanStatus.DONE && onCompleteBurst) {
+                onCompleteBurst(e.clientX, e.clientY)
+            }
             onEdit(todo._id, {
                 title: todo.title,
                 date: todo.date,

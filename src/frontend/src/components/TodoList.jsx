@@ -22,6 +22,7 @@ function TodoList({
   listGroupByStatus = false,
   listShowCanvas = true,
   listShowNonCanvas = true,
+  onCompleteBurst,
 }) {
   const [selectedTask, setSelectedTask] = useState(null)
   const [modalMode, setModalMode] = useState('view')
@@ -115,6 +116,9 @@ function TodoList({
     if (!todo || isArchivedDoneTask(todo)) return
     const current = todo.status || KanbanStatus.TODO
     if (current === targetStatus) return
+    if (targetStatus === KanbanStatus.DONE && onCompleteBurst) {
+      onCompleteBurst(e.clientX, e.clientY)
+    }
     onEdit(todo._id, {
       title: todo.title,
       date: todo.date,

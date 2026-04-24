@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from './axios'
 import Login from './components/Login'
 import LandingPage from './components/LandingPage'
@@ -10,6 +10,7 @@ import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
 import ListViewToolbar from './components/ListViewToolbar'
+import CompletionBurst from './components/CompletionBurst'
 import taskflowLogo from '../assets/taskflow_logo.png'
 import './App.css'
 import './styles/canvasTask.css'
@@ -40,6 +41,19 @@ function App() {
   const [listGroupByStatus, setListGroupByStatus] = useState(false)
   const [listShowCanvas, setListShowCanvas] = useState(true)
   const [listShowNonCanvas, setListShowNonCanvas] = useState(true)
+  const [completionBurst, setCompletionBurst] = useState(null)
+
+  const clearCompletionBurst = useCallback(() => {
+    setCompletionBurst(null)
+  }, [])
+
+  const fireCompletionBurst = useCallback((clientX, clientY) => {
+    setCompletionBurst({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      x: clientX,
+      y: clientY,
+    })
+  }, [])
 
   // login or refresh-> load theme, auto-import Canvas assignments
   useEffect(() => {
@@ -239,6 +253,7 @@ function App() {
             onDelete={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask}
+            onCompleteBurst={fireCompletionBurst}
           />
         ) 
       case 'list':
@@ -254,6 +269,7 @@ function App() {
             listGroupByStatus={listGroupByStatus}
             listShowCanvas={listShowCanvas}
             listShowNonCanvas={listShowNonCanvas}
+            onCompleteBurst={fireCompletionBurst}
           />
         )
     }
@@ -356,6 +372,15 @@ function App() {
           <main className="app-main">
             {renderContent()}
           </main>
+
+          {completionBurst && (
+            <CompletionBurst
+              key={completionBurst.id}
+              x={completionBurst.x}
+              y={completionBurst.y}
+              onDone={clearCompletionBurst}
+            />
+          )}
 
           <footer className="app-footer">
             <p>ASE285 Team Project</p>
