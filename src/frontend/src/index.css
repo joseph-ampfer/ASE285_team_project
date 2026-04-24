@@ -16,6 +16,17 @@ body[data-theme="light"] {
   color: #1e293b;
 }
 
+body:has(.app--landing) {
+  background: linear-gradient(
+    170deg,
+    #f2f7fc 0%,
+    #eaf1f9 22%,
+    #e2ebf6 48%,
+    #a3dce8 100%
+  );
+  color: #1e293b;
+}
+
 #root {
   min-height: 100vh;
   display: flex;

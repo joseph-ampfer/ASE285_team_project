@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from './axios'
 import Login from './components/Login'
+import LandingPage from './components/LandingPage'
 import { clearAuth } from './auth'
 import TodoList from './components/TodoList'
 import CalendarView from './components/CalendarView'
@@ -21,6 +22,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem('token')
   )
+  const [authView, setAuthView] = useState('landing')
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -242,9 +244,19 @@ function App() {
   }
 
   return (
-    <div className="app" data-theme={theme}>
+    <div
+      className={`app${!isAuthenticated && authView === 'landing' ? ' app--landing' : ''}`}
+      data-theme={theme}
+    >
       {!isAuthenticated ? (
-        <Login onLogin={() => setIsAuthenticated(true)} />
+        authView === 'landing' ? (
+          <LandingPage onSignIn={() => setAuthView('login')} />
+        ) : (
+          <Login
+            onLogin={() => setIsAuthenticated(true)}
+            onBack={() => setAuthView('landing')}
+          />
+        )
       ) : (
         <>
           <div className="app-top-controls">
@@ -253,6 +265,7 @@ function App() {
               onClick={() => {
                 clearAuth()
                 setIsAuthenticated(false)
+                setAuthView('landing')
               }}
             >
               Logout
