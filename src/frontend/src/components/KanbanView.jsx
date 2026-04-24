@@ -4,7 +4,7 @@ import './KanbanView.css'
 import { KanbanStatus } from '../../../backend/models/Post'
 import { isCanvasTask } from '../util/canvasTask'
 import { taskStatusModifierClass } from '../util/taskStatus'
-import { compareByDueDate, compareKanbanDoneOrder } from '../util/taskSort'
+import { compareByDueDate, compareDoneRecentFirst } from '../util/taskSort'
 import { isArchivedDoneTask } from '../util/archiveTask'
 
 const COLUMNS = [
@@ -92,7 +92,7 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
             return [...list].sort(compareByDueDate)
         }
         if (status === KanbanStatus.DONE) {
-            return [...list].sort(compareKanbanDoneOrder)
+            return [...list].sort(compareDoneRecentFirst)
         }
         return list
     }

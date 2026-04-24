@@ -1,5 +1,6 @@
 import GamificationStats from '../models/GamificationStats.js';
 import GamificationEvent from '../models/GamificationEvent.js';
+import Post, { KanbanStatus } from '../models/Post.js';
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
@@ -36,6 +37,15 @@ async function getOrCreateStats(userId) {
   const existing = await GamificationStats.findById(id);
   if (existing) return existing;
   return await GamificationStats.create({ _id: id });
+}
+
+async function countTodosCompletedInLast7Days(userId) {
+  const start = new Date(Date.now() - 7 * MS_PER_DAY);
+  return Post.countDocuments({
+    owner: userId,
+    status: KanbanStatus.DONE,
+    completedAt: { $ne: null, $gte: start },
+  });
 }
 
 function updateStreak(stats, completionDay) {
@@ -122,6 +132,8 @@ export async function awardForTaskCompletion(todo, userId) {
     completionDay,
   });
 
+  const completedLast7Days = await countTodosCompletedInLast7Days(userId);
+
   return {
     gained: scoring.gained,
     breakdown: {
@@ -136,6 +148,7 @@ export async function awardForTaskCompletion(todo, userId) {
       streakCount: stats.streakCount,
       lastCompletionDay: stats.lastCompletionDay,
       nextLevelAt: nextLevelAt(stats.level),
+      completedLast7Days,
     },
     completedAt,
     completionDay,
@@ -147,12 +160,15 @@ export async function getStats(userId) {
   stats.level = computeLevel(stats.points);
   await stats.save();
 
+  const completedLast7Days = await countTodosCompletedInLast7Days(userId);
+
   return {
     points: stats.points,
     level: stats.level,
     streakCount: stats.streakCount,
     lastCompletionDay: stats.lastCompletionDay,
     nextLevelAt: nextLevelAt(stats.level),
+    completedLast7Days,
   };
 }
 
@@ -175,4 +191,49 @@ export async function getHistory(userId, limit = 50) {
     completionDay: e.completionDay,
     createdAt: e.createdAt,
   }));
+}
+
+/**
+ * Remove history: delete event, subtract gained points, refresh level
+ */
+export async function deleteHistoryEvent(userId, eventId) {
+  if (!userId) {
+    throw new Error('userId is required for gamification');
+  }
+  if (!eventId) {
+    throw new Error('eventId is required');
+  }
+
+  const event = await GamificationEvent.findOne({
+    _id: String(eventId),
+    owner: userId,
+  });
+
+  if (!event) {
+    return null;
+  }
+
+  const gained = Math.max(0, Number(event.gained) || 0);
+
+  await GamificationEvent.deleteOne({ _id: event._id });
+
+  const stats = await getOrCreateStats(userId);
+  stats.points = Math.max(0, stats.points - gained);
+  stats.level = computeLevel(stats.points);
+
+  await stats.save();
+
+  const completedLast7Days = await countTodosCompletedInLast7Days(userId);
+
+  return {
+    stats: {
+      points: stats.points,
+      level: stats.level,
+      streakCount: stats.streakCount,
+      lastCompletionDay: stats.lastCompletionDay,
+      nextLevelAt: nextLevelAt(stats.level),
+      completedLast7Days,
+    },
+    history: await getHistory(userId, 100),
+  };
 }

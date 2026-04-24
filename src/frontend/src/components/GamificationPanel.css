@@ -5,6 +5,43 @@
   z-index: 20;
 }
 
+.gp-column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gp-share-trigger {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #94a3b8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.gp-share-trigger:hover {
+  color: #00d9ff;
+  background: rgba(0, 217, 255, 0.08);
+  border-color: rgba(0, 217, 255, 0.25);
+}
+
+.app[data-theme="light"] .gp-share-trigger {
+  color: #64748b;
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+.app[data-theme="light"] .gp-share-trigger:hover {
+  color: #0e7490;
+  background: rgba(0, 217, 255, 0.12);
+  border-color: rgba(0, 217, 255, 0.3);
+}
+
 .gp-backdrop {
   position: fixed;
   inset: 0;
@@ -218,6 +255,7 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  gap: 0.35rem;
   padding: 0.45rem 0.5rem;
   border-radius: 8px;
   background: rgba(15, 23, 42, 0.85);
@@ -225,9 +263,46 @@
 }
 
 .gp-history-main {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+.gp-history-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.15rem;
+  flex-shrink: 0;
+  margin-left: 0.25rem;
+}
+
+.gp-history-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  line-height: 1;
+  color: #94a3b8;
+  background: rgba(148, 163, 184, 0.12);
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+
+.gp-history-remove:hover:not(:disabled) {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.15);
+}
+
+.gp-history-remove:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 
 .gp-history-title {
@@ -295,6 +370,16 @@
 .app[data-theme="light"] .gp-history-item {
   background: rgba(255, 255, 255, 0.8);
   border-color: rgba(0, 0, 0, 0.06);
+}
+
+.app[data-theme="light"] .gp-history-remove {
+  color: #64748b;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.app[data-theme="light"] .gp-history-remove:hover:not(:disabled) {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
 }
 
 @media (max-width: 640px) {

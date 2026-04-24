@@ -9,11 +9,12 @@ import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
 import ListViewToolbar from './components/ListViewToolbar'
+import taskflowLogo from '../assets/taskflow_logo.png'
 import './App.css'
 import './styles/canvasTask.css'
 import './styles/taskStatus.css'
 
-// API base URL - uses Vite proxy in development
+// API base URL
 const API_URL = '/api/posts'
 
 function App() {
@@ -28,7 +29,8 @@ function App() {
     points: 0,
     level: 1,
     streakCount: 0,
-    nextLevelAt: 100
+    nextLevelAt: 100,
+    completedLast7Days: 0,
   })
   const [history, setHistory] = useState([])
   const [isGamificationOpen, setIsGamificationOpen] = useState(false)
@@ -100,6 +102,19 @@ function App() {
     } catch (err) {
       console.error('Error fetching gamification data:', err)
       // Gamification is optional; do not surface an error banner.
+    }
+  }
+
+  const deleteGamificationHistoryItem = async (eventId) => {
+    try {
+      const res = await axios.delete(
+        `/api/gamification/history/${encodeURIComponent(eventId)}`
+      )
+      setStats(res.data.stats)
+      setHistory(res.data.history)
+    } catch (err) {
+      console.error('Error deleting gamification history:', err)
+      throw err
     }
   }
 
@@ -251,10 +266,22 @@ function App() {
             history={history}
             open={isGamificationOpen}
             onToggle={() => setIsGamificationOpen(!isGamificationOpen)}
+            onDeleteHistoryItem={deleteGamificationHistoryItem}
+            theme={theme}
+            refreshGamification={fetchGamification}
           />
 
           <header className="app-header">
-            <h1>📝 <span className='app-title'>TaskFlow</span></h1>
+            <h1 className="app-brand-heading">
+              <img
+                src={taskflowLogo}
+                alt=""
+                className="app-brand-logo"
+                width={40}
+                height={40}
+              />
+              <span className='app-title'>TaskFlow</span>
+            </h1>
             <p className="subtitle">Manage your tasks efficiently</p>
 
             <nav className="app-nav">
