@@ -1,0 +1,43 @@
+.completion-burst {
+  position: fixed;
+  z-index: 10050;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  width: 0;
+  height: 0;
+}
+
+.completion-burst__dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin-left: calc(var(--size, 6px) / -2);
+  margin-top: calc(var(--size, 6px) / -2);
+  width: var(--size, 6px);
+  height: var(--size, 6px);
+  border-radius: 50%;
+  opacity: 1;
+  animation: completion-burst-fly 1.02s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes completion-burst-fly {
+  0% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--tx), var(--ty)) scale(0.15);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .completion-burst__dot {
+    animation-duration: 0.12s;
+    animation-timing-function: ease-out;
+  }
+}

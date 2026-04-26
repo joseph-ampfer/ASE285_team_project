@@ -1,15 +1,16 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import TodoItem from './TodoItem'
 import TaskDetailModal from './TaskDetailModal'
+import FlaticonIcon from './FlaticonIcon'
 import { KanbanStatus } from '../../../backend/models/Post'
 import { isCanvasTask } from '../util/canvasTask'
 import { isArchivedDoneTask } from '../util/archiveTask'
 import { compareByDueDate, compareDoneRecentFirst } from '../util/taskSort'
 
 const GROUP_LABELS = [
-  { status: KanbanStatus.IN_PROGRESS, title: 'In progress' },
-  { status: KanbanStatus.TODO, title: 'To do' },
-  { status: KanbanStatus.DONE, title: 'Done' },
+  { status: KanbanStatus.IN_PROGRESS, title: 'In progress', icon: 'pending' },
+  { status: KanbanStatus.TODO, title: 'To do', icon: 'todo' },
+  { status: KanbanStatus.DONE, title: 'Done', icon: 'doneCheckbox' },
 ]
 
 function TodoList({
@@ -22,6 +23,7 @@ function TodoList({
   listGroupByStatus = false,
   listShowCanvas = true,
   listShowNonCanvas = true,
+  onCompleteBurst,
 }) {
   const [selectedTask, setSelectedTask] = useState(null)
   const [modalMode, setModalMode] = useState('view')
@@ -115,6 +117,9 @@ function TodoList({
     if (!todo || isArchivedDoneTask(todo)) return
     const current = todo.status || KanbanStatus.TODO
     if (current === targetStatus) return
+    if (targetStatus === KanbanStatus.DONE && onCompleteBurst) {
+      onCompleteBurst(e.clientX, e.clientY)
+    }
     onEdit(todo._id, {
       title: todo.title,
       date: todo.date,
@@ -129,7 +134,7 @@ function TodoList({
   )
 
   const groupedSections = useMemo(() => {
-    return GROUP_LABELS.map(({ status, title }) => {
+    return GROUP_LABELS.map(({ status, title, icon }) => {
       const raw = filteredActive.filter(
         (t) => (t.status || KanbanStatus.TODO) === status
       )
@@ -137,7 +142,7 @@ function TodoList({
         status === KanbanStatus.DONE
           ? [...raw].sort(compareDoneRecentFirst)
           : [...raw].sort(compareByDueDate)
-      return { status, title, items: sorted }
+      return { status, title, icon, items: sorted }
     })
   }, [filteredActive])
 
@@ -154,7 +159,10 @@ function TodoList({
   return (
     <div className="todo-list">
       <button type="button" onClick={() => setIsCreating(true)}>
-        ➕ Add Task
+        <span className="inline-with-icon">
+          <FlaticonIcon name="plus" size={18} />
+          Add Task
+        </span>
       </button>
 
       {todos.length === 0 && (
@@ -175,7 +183,7 @@ function TodoList({
 
       {!showFilterEmpty && todos.length > 0 && listGroupByStatus && (
         <div className="todo-list-main todo-list-grouped">
-          {groupedSections.map(({ status, title, items }) => (
+          {groupedSections.map(({ status, title, icon, items }) => (
             <section
               key={status}
               className={`list-status-group${
@@ -185,7 +193,10 @@ function TodoList({
               onDrop={(e) => handleGroupDrop(e, status)}
               onDragLeave={() => setDragOverGroupStatus(null)}
             >
-              <h3 className="list-status-group-title">{title}</h3>
+              <h3 className="list-status-group-title">
+                <FlaticonIcon name={icon} size={16} />
+                {title}
+              </h3>
               <div className="list-status-group-items">
                 {items.length === 0 ? (
                   <div className="list-status-group-empty">Drop tasks here</div>

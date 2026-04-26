@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import TaskDetailModal from './TaskDetailModal'
+import FlaticonIcon from './FlaticonIcon'
 import './KanbanView.css'
 import { KanbanStatus } from '../../../backend/models/Post'
 import { isCanvasTask } from '../util/canvasTask'
@@ -8,12 +9,12 @@ import { compareByDueDate, compareDoneRecentFirst } from '../util/taskSort'
 import { isArchivedDoneTask } from '../util/archiveTask'
 
 const COLUMNS = [
-    { id: KanbanStatus.TODO, title: 'Todo', emoji: '📥' },
-    { id: KanbanStatus.IN_PROGRESS, title: 'In Progress', emoji: '⚡' },
-    { id: KanbanStatus.DONE, title: 'Done', emoji: '✅' }
+    { id: KanbanStatus.TODO, title: 'Todo', icon: 'todo' },
+    { id: KanbanStatus.IN_PROGRESS, title: 'In Progress', icon: 'pending' },
+    { id: KanbanStatus.DONE, title: 'Done', icon: 'doneCheckbox' },
 ]
 
-function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubtask }) {
+function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubtask, onCompleteBurst }) {
     const [selectedTaskId, setSelectedTaskId] = useState(null)
     const [dragOverColumn, setDragOverColumn] = useState(null)
     const [isCreating, setIsCreating] = useState(false)
@@ -46,6 +47,9 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
 
         const todo = todos.find(t => t._id === todoId)
         if (todo && todo.status !== columnId) {
+            if (columnId === KanbanStatus.DONE && onCompleteBurst) {
+                onCompleteBurst(e.clientX, e.clientY)
+            }
             onEdit(todo._id, {
                 title: todo.title,
                 date: todo.date,
@@ -111,7 +115,10 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                             onDragLeave={() => setDragOverColumn(null)}
                         >
                             <h3>
-                                <span>{column.emoji} {column.title}</span>
+                                <span className="kanban-column-heading">
+                                    <FlaticonIcon name={column.icon} size={18} />
+                                    {column.title}
+                                </span>
                                 <span className="column-count">{columnTasks.length}</span>
                             </h3>
 
@@ -123,7 +130,10 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                                     setModalMode('create')
                                 }}
                                 >
-                                ➕ Add Task
+                                <span className="inline-with-icon">
+                                    <FlaticonIcon name="plus" size={18} />
+                                    Add Task
+                                </span>
                                 </button>
                             )}
 
@@ -148,7 +158,10 @@ function KanbanView({ todos, onEdit, onAdd, onDelete, onAddSubtask, onToggleSubt
                                             {fromCanvas && <span className="canvas-task-suffix">[Canvas]</span>}
                                         </div>
                                         <div className="kanban-item-footer">
-                                            <span>📅 {todo.date}</span>
+                                            <span className="inline-with-icon">
+                                                <FlaticonIcon name="calendar" size={14} />
+                                                {todo.date}
+                                            </span>
                                         </div>
                                     </div>
                                     );

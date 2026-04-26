@@ -1,3 +1,4 @@
+import FlaticonIcon from './FlaticonIcon'
 import './ThemeToggle.css'
 
 function ThemeToggle({ theme, onToggle }) {
@@ -5,7 +6,9 @@ function ThemeToggle({ theme, onToggle }) {
 
   return (
     <div className="theme-toggle-wrap">
-      <span className="theme-toggle-label" aria-hidden>⏾</span>  
+      <span className="theme-toggle-label" aria-hidden>
+        <FlaticonIcon name="moon" size={16} />
+      </span>
       <button
         type="button"
         className={`theme-toggle ${isLight ? 'theme-toggle-on' : ''}`}
@@ -15,7 +18,9 @@ function ThemeToggle({ theme, onToggle }) {
       >
         <span className="theme-toggle-thumb" />
       </button>
-      <span className="theme-toggle-label" aria-hidden>☀</span>
+      <span className="theme-toggle-label" aria-hidden>
+        <FlaticonIcon name="sun" size={16} />
+      </span>
     </div>
   )
 }

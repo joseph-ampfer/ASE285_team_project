@@ -312,6 +312,10 @@
 }
 
 .gp-history-date {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.35rem;
   font-size: 0.75rem;
   color: #94a3b8;
 }

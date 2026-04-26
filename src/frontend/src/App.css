@@ -8,6 +8,17 @@
   position: relative;
 }
 
+.app.app--landing {
+  max-width: min(56rem, 100%);
+  align-self: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: calc(100vh - 4rem);
+  padding: 0;
+  background: transparent;
+  color: #1e293b;
+}
+
 .app-top-controls {
   position: absolute;
   top: 1rem;
@@ -70,6 +81,9 @@
 }
 
 .nav-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   color: #aaa;
@@ -273,6 +287,9 @@
 }
 
 .list-status-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
   margin: 0.5rem 0 0.25rem;
   font-size: 0.85rem;
   font-weight: 600;
@@ -404,6 +421,9 @@
 }
 
 .todo-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.875rem;
   color: #888;
 }
@@ -699,4 +719,53 @@ input::placeholder, textarea::placeholder {
 
 .auth-card .error-message {
   margin-top: 1rem;
+}
+
+.auth-card-outer {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+}
+
+.auth-back-square {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.28);
+  color: #e8e8e8;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.auth-back-square--beside-card {
+  position: absolute;
+  right: calc(100% + 0.85rem);
+  top: 1.35rem;
+  left: auto;
+}
+
+.auth-back-square:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(0, 217, 255, 0.45);
+  color: #fff;
+}
+
+@media (max-width: 520px) {
+  .auth-back-square--beside-card {
+    right: auto;
+    left: 0;
+    top: 0;
+  }
+
+  .auth-card-outer--with-back {
+    padding-top: 3.25rem;
+  }
 }

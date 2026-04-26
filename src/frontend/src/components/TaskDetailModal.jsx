@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Portal from './Portal'
+import FlaticonIcon from './FlaticonIcon'
 import './TaskDetailModal.css'
 
 function TaskDetailModal({
@@ -64,14 +65,14 @@ function TaskDetailModal({
 				<div className="modal-header-actions">
 				{mode === 'view' && !isCreate && (
 					<>
-					<button className="btn-icon btn-edit" title="Edit" onClick={() => setMode('edit')}>✏️</button>
-					<button className="btn-icon btn-delete" title="Delete" onClick={handleDelete}>🗑️</button>
+					<button className="btn-icon btn-edit" title="Edit" onClick={() => setMode('edit')}><FlaticonIcon name="pencil" size={18} variant="toolbar" /></button>
+					<button className="btn-icon btn-delete" title="Delete" onClick={handleDelete}><FlaticonIcon name="trash" size={18} variant="toolbar" /></button>
 					</>
 				)}
 				{(mode === 'edit' || isCreate) && (
 					<>
-					<button className="btn-icon btn-primary" title="Save" onClick={handleSave}>💾</button>
-					<button className="btn-icon btn-secondary" title="Cancel" onClick={() => isCreate ? onClose() : setMode('view')}>❌</button>
+					<button className="btn-icon btn-primary" title="Save" onClick={handleSave}><FlaticonIcon name="save" size={18} variant="toolbar" /></button>
+					<button className="btn-icon btn-secondary" title="Cancel" onClick={() => isCreate ? onClose() : setMode('view')}><FlaticonIcon name="cancel" size={18} variant="toolbar" /></button>
 					</>
 				)}
 				</div>
@@ -89,7 +90,7 @@ function TaskDetailModal({
 				<div className="info-group">
 				<label>
 					<span className="modal-label">Due Date</span>
-					{mode === 'view' ? <p className="modal-value">📅 {task?.date}</p> :
+					{mode === 'view' ? <p className="modal-value inline-with-icon"><FlaticonIcon name="calendar" size={16} />{task?.date}</p> :
 					<input type="date" value={form.date} onChange={e => handleChange('date', e.target.value)} />}
 				</label>
 				</div>

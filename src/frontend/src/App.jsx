@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import axios from './axios'
 import Login from './components/Login'
+import LandingPage from './components/LandingPage'
 import { clearAuth } from './auth'
 import TodoList from './components/TodoList'
 import CalendarView from './components/CalendarView'
@@ -9,6 +10,8 @@ import GamificationPanel from './components/GamificationPanel'
 import ThemeToggle from './components/ThemeToggle'
 import CanvasIntegration from './components/CanvasIntegration'
 import ListViewToolbar from './components/ListViewToolbar'
+import CompletionBurst from './components/CompletionBurst'
+import FlaticonIcon from './components/FlaticonIcon'
 import taskflowLogo from '../assets/taskflow_logo.png'
 import './App.css'
 import './styles/canvasTask.css'
@@ -21,6 +24,7 @@ function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem('token')
   )
+  const [authView, setAuthView] = useState('landing')
   const [todos, setTodos] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -38,34 +42,63 @@ function App() {
   const [listGroupByStatus, setListGroupByStatus] = useState(false)
   const [listShowCanvas, setListShowCanvas] = useState(true)
   const [listShowNonCanvas, setListShowNonCanvas] = useState(true)
+  const [completionBurst, setCompletionBurst] = useState(null)
 
-  // Fetch all todos and settings on mount
+  const clearCompletionBurst = useCallback(() => {
+    setCompletionBurst(null)
+  }, [])
+
+  const fireCompletionBurst = useCallback((clientX, clientY) => {
+    setCompletionBurst({
+      id: `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+      x: clientX,
+      y: clientY,
+    })
+  }, [])
+
+  // login or refresh-> load theme, auto-import Canvas assignments
   useEffect(() => {
     if (!isAuthenticated) return
 
-    fetchTodos()
-    fetchGamification()
-    fetchSettings()
-    axios.get('/api/settings').then((r) => {
-      if (r.data?.canvasApiToken?.trim()) {
-        return axios.post('/api/canvas/sync').then(() => fetchTodos()).catch(() => {})
+    let active = true
+
+    const bootstrapAuthenticatedSession = async () => {
+      setLoading(true)
+      void fetchGamification()
+
+      try {
+        const settingsRes = await axios.get('/api/settings')
+        if (!active) return
+        setTheme(settingsRes.data.theme || 'dark')
+
+        const canvasToken = settingsRes.data?.canvasApiToken?.trim()
+        if (canvasToken) {
+          try {
+            await axios.post('/api/canvas/sync')
+          } catch (err) {
+            console.error('Canvas auto-sync on session start failed:', err)
+          }
+        }
+        if (!active) return
+        await fetchTodos()
+      } catch (err) {
+        console.error('Error bootstrapping session:', err)
+        if (active) await fetchTodos()
+      } finally {
+        if (!active) setLoading(false)
       }
-    }).catch(() => {})
+    }
+
+    void bootstrapAuthenticatedSession()
+    return () => {
+      active = false
+    }
   }, [isAuthenticated])
 
   // Apply theme to body for global styles
   useEffect(() => {
     document.body.setAttribute('data-theme', theme)
   }, [theme])
-
-  const fetchSettings = async () => {
-    try {
-      const res = await axios.get('/api/settings')
-      setTheme(res.data.theme || 'dark')
-    } catch (err) {
-      console.error('Error fetching settings:', err)
-    }
-  }
 
   const handleThemeToggle = async () => {
     const next = theme === 'dark' ? 'light' : 'dark'
@@ -221,6 +254,7 @@ function App() {
             onDelete={deleteTodo}
             onAddSubtask={addSubtask}
             onToggleSubtask={toggleSubtask}
+            onCompleteBurst={fireCompletionBurst}
           />
         ) 
       case 'list':
@@ -236,15 +270,26 @@ function App() {
             listGroupByStatus={listGroupByStatus}
             listShowCanvas={listShowCanvas}
             listShowNonCanvas={listShowNonCanvas}
+            onCompleteBurst={fireCompletionBurst}
           />
         )
     }
   }
 
   return (
-    <div className="app" data-theme={theme}>
+    <div
+      className={`app${!isAuthenticated && authView === 'landing' ? ' app--landing' : ''}`}
+      data-theme={theme}
+    >
       {!isAuthenticated ? (
-        <Login onLogin={() => setIsAuthenticated(true)} />
+        authView === 'landing' ? (
+          <LandingPage onSignIn={() => setAuthView('login')} />
+        ) : (
+          <Login
+            onLogin={() => setIsAuthenticated(true)}
+            onBack={() => setAuthView('landing')}
+          />
+        )
       ) : (
         <>
           <div className="app-top-controls">
@@ -253,6 +298,7 @@ function App() {
               onClick={() => {
                 clearAuth()
                 setIsAuthenticated(false)
+                setAuthView('landing')
               }}
             >
               Logout
@@ -289,19 +335,22 @@ function App() {
                 className={`nav-btn ${currentView === 'list' ? 'active' : ''}`}
                 onClick={() => setCurrentView('list')}
               >
-                📋 List
+                <FlaticonIcon name="menu" size={20} />
+                List
               </button>
               <button
                 className={`nav-btn ${currentView === 'kanban' ? 'active' : ''}`}
                 onClick={() => setCurrentView('kanban')}
               >
-                ⚡ Kanban
+                <FlaticonIcon name="kanban" size={20} />
+                Kanban
               </button>
               <button
                 className={`nav-btn ${currentView === 'calendar' ? 'active' : ''}`}
                 onClick={() => setCurrentView('calendar')}
               >
-                📅 Calendar
+                <FlaticonIcon name="calendar" size={20} />
+                Calendar
               </button>
             </nav>
 
@@ -327,6 +376,15 @@ function App() {
           <main className="app-main">
             {renderContent()}
           </main>
+
+          {completionBurst && (
+            <CompletionBurst
+              key={completionBurst.id}
+              x={completionBurst.x}
+              y={completionBurst.y}
+              onDone={clearCompletionBurst}
+            />
+          )}
 
           <footer className="app-footer">
             <p>ASE285 Team Project</p>
