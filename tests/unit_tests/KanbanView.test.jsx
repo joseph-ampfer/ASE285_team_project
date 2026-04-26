@@ -31,6 +31,11 @@ vi.mock('../../src/frontend/src/components/TaskDetailModal', () => ({
   )
 }))
 
+// Mock FlaticonIcon to render a testable element
+vi.mock('../../src/frontend/src/components/FlaticonIcon', () => ({
+  default: ({ name }) => <span data-testid={`icon-${name}`} aria-hidden="true" />,
+}))
+
 // Mock CSS import (no-op)
 vi.mock('../../src/frontend/src/components/KanbanView.css', () => ({}))
 
@@ -86,13 +91,13 @@ describe('KanbanView', () => {
     expect(screen.getByText(/done/i)).toBeInTheDocument()
   })
 
-  it('renders column emojis', () => {
+  it('renders column icons', () => {
     render(<KanbanView {...defaultProps} />)
 
-    // Emojis are rendered alongside column titles
-    expect(screen.getByText(/📥/)).toBeInTheDocument()
-    expect(screen.getByText(/⚡/)).toBeInTheDocument()
-    expect(screen.getByText(/✅/)).toBeInTheDocument()
+    // Icons are rendered alongside column titles
+    expect(screen.getByTestId('icon-todo')).toBeInTheDocument()
+    expect(screen.getByTestId('icon-pending')).toBeInTheDocument()
+    expect(screen.getByTestId('icon-doneCheckbox')).toBeInTheDocument()
   })
 
   it('shows the correct task count per column', () => {
@@ -147,9 +152,9 @@ describe('KanbanView', () => {
   it('displays the due date on each task card', () => {
     render(<KanbanView {...defaultProps} />)
 
-    // Each task shows 📅 + date
+    // Each task shows the date text (icon is decorative, rendered separately)
     sampleTodos.forEach(todo => {
-      expect(screen.getByText(`📅 ${todo.date}`)).toBeInTheDocument()
+      expect(screen.getByText(todo.date)).toBeInTheDocument()
     })
   })
 
